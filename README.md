@@ -19,16 +19,17 @@
 
 ## 📌 Sumário
 - [1. Visão Geral do Projeto](#1-visão-geral-do-projeto)
-- [2. Arquitetura de Microsserviços & Stack Tecnológica](#2-arquitetura-de-microsserviços--stack-tecnológica)
-- [3. Diagrama da Arquitetura do Sistema](#3-diagrama-da-arquitetura-do-sistema)
-- [4. Detalhamento dos 5 Microsserviços](#4-detalhamento-dos-5-microsserviços)
-- [5. Camada de Inteligência Artificial & Multi-Agentes](#5-camada-de-inteligência-artificial--multi-agentes)
-- [6. Engenharia de Dados & Persistência](#6-engenharia-de-dados--persistência)
-- [7. Orquestração no Kubernetes (Amazon EKS) & KEDA](#7-orquestração-no-kubernetes-amazon-eks--keda)
-- [8. FinOps & AWS Free Tier Guardrail ($1.00 Budget)](#8-finops--aws-free-tier-guardrail-100-budget)
-- [9. Esteira DevSecOps & Automated Releases no GitHub Actions](#9-esteira-devsecops--automated-releases-no-github-actions)
-- [10. Guia de Execução Local & Testes](#10-guia-de-execução-local--testes)
-- [11. Referência de APIs REST & SSE](#11-referência-de-apis-rest--sse)
+- [2. Matriz de Tecnologias & Stack do Monorepo](#2-matriz-de-tecnologias--stack-do-monorepo)
+- [3. Arquitetura de Cloud Computing AWS & FinOps](#3-arquitetura-de-cloud-computing-aws--finops)
+- [4. Diagrama da Arquitetura do Sistema & Event Streaming](#4-diagrama-da-arquitetura-do-sistema--event-streaming)
+- [5. Detalhamento dos 5 Microsserviços](#5-detalhamento-dos-5-microsserviços)
+- [6. Camada de Inteligência Artificial & Multi-Agentes](#6-camada-de-inteligência-artificial--multi-agentes)
+- [7. Engenharia de Dados & Persistência](#7-engenharia-de-dados--persistência)
+- [8. Orquestração no Kubernetes (Amazon EKS) & KEDA](#8-orquestração-no-kubernetes-amazon-eks--keda)
+- [9. FinOps & AWS Free Tier Guardrail ($1.00 Budget)](#9-finops--aws-free-tier-guardrail-100-budget)
+- [10. Esteira DevSecOps & Automated Releases no GitHub Actions](#10-esteira-devsecops--automated-releases-no-github-actions)
+- [11. Guia de Execução Local & Testes](#11-guia-de-execução-local--testes)
+- [12. Referência de APIs REST & SSE](#12-referência-de-apis-rest--sse)
 
 ---
 
@@ -42,13 +43,15 @@ O ecossistema foi construído do zero utilizando os princípios de **Clean Archi
 1. **Ultra-Baixa Latência & Edge Security:** Proteção nativa PCI-DSS com mascaramento em voo de dados sensíveis (PII Sanitizer) e streaming de tokens via Server-Sent Events (SSE).
 2. **RAG Híbrido com Cache Semântico:** Busca vetorial combinada (pgvector HNSW + Busca Lexical BM25) com cache semântico em memória no Redis que reduz o custo de LLM para R$ 0,00 e latência para 10ms em perguntas frequentes.
 3. **Crew de Multi-Agentes de Chargeback:** 3 agentes autônomos (Extrator de Evidências, Auditor de Compliance de Bandeiras e Redator Jurídico) que geram defesas formais de contestações financeiras automaticamente.
-4. **Resiliência Transacional:** Padrão **Transactional Outbox** em Java 26 que garante consistência eventual atômica entre o banco relacional e mensageria assíncrona (Amazon SQS).
+4. **Resiliência Transacional:** Padrão **Transactional Outbox** em Java 26 que garante consistência eventual atômica entre o banco relacional e mensageria assíncrona (Apache Kafka & Amazon SQS).
 
 ---
 
-## 2. Arquitetura de Microsserviços & Stack Tecnológica
+## 2. Matriz de Tecnologias & Stack do Monorepo
 
-O sistema é estruturado em um **Monorepo Modular** composto por 5 microsserviços especializados e desacoplados via **Apache Kafka & Amazon SQS**:
+O NexusPay AI Engine adota uma stack moderna e heterogênea (Polyglot Monorepo), escolhendo a tecnologia ideal para cada domínio de negócio:
+
+### 🛠️ 2.1. Visão Geral dos Microsserviços e Stacks
 
 | Microsserviço | Stack Tecnológica | Porta | Responsabilidade Principal |
 | :--- | :--- | :--- | :--- |
@@ -58,9 +61,147 @@ O sistema é estruturado em um **Monorepo Modular** composto por 5 microsserviç
 | **POS Diagnostics Service** | `Python 3.14` + `FastAPI` + `Pydantic v2` | `8002` | Telemetria de maquininhas de cartão, análise ISO 8583 e sincronismo EMV/PINPAD. |
 | **Dispute Agent Worker** | `Python 3.14` + `CrewAI` + `Kafka Consumer` + `SQS` | Worker | Worker assíncrono para resolução de chargebacks via streaming Kafka e filas SQS com KEDA. |
 
+### 📚 2.2. Detalhamento de Todas as Tecnologias Empregadas
+
+#### 🌐 Linguagens de Programação & Runtimes:
+* **Node.js 26.x LTS:** Runtime assíncrono de I/O não-bloqueante no Edge Gateway, aproveitando os recursos modernos da V8 para máxima vazão de requisições concorrentes.
+* **TypeScript 5.7+:** Superset com tipagem estática rigorosa no Gateway, garantindo segurança de tipos em tempo de compilação para roteamento e sanitização de payloads.
+* **Java 26 (Early Access):** Plataforma do core transacional bancário, utilizando **Virtual Threads (Project Loom)** para concorrência de alta escala e **ZGC Generational** para pausas de GC sub-milissegundos.
+* **Python 3.14.x:** Linguagem para a camada de Inteligência Artificial, RAG Híbrido, telemetria POS e Orquestração Multi-Agentes com suporte nativo a operações assíncronas (`asyncio`).
+* **SQL (ANSI & PostgreSQL 16 Dialect):** Modelagem relacional e vetorial com DDLs estruturadas, particionamento nativo de tabelas e indexação especializada em grafos vetoriais.
+* **HCL (HashiCorp Configuration Language / Terraform 1.9+):** Linguagem declarativa para Infraestrutura como Código (IaC), provisionando recursos de nuvem de forma reproduzível.
+* **YAML:** Definição declarativa de manifestos do Kubernetes (K8s v1.31), Kustomize, Docker Compose e pipelines de CI/CD do GitHub Actions.
+
+#### ⚙️ Frameworks & Bibliotecas de Backend:
+* **Fastify 4/5:** Framework web ultra-rápido para Node.js com arquitetura orientada a plugins (`@fastify/helmet` para headers de segurança, `@fastify/cors`, `@fastify/rate-limit` para proteção contra DDoS e `@fastify/http-proxy` para encaminhamento perimetral).
+* **Spring Boot 4.0.0-SNAPSHOT:** Framework corporativo Java que provê injeção de dependência, persistência JPA, transacionalidade declarativa (`@Transactional`) e métricas com Spring Boot Actuator.
+* **Project Lombok 1.18.36:** Processador de anotações Java que gera getters, setters, construtores e builders em tempo de compilação, mantendo o código limpo e sem boilerplate.
+* **FastAPI 0.115+ & Uvicorn 0.32+ (ASGI):** Framework web assíncrono em Python baseado em OpenAPI e Starlette, com validação de dados em alta velocidade.
+* **Pydantic v2.10+ & Pydantic-Settings:** Validação estrita de contratos de entrada/saída, coerção de tipos e gerenciamento seguro de configurações de ambiente.
+* **CrewAI:** Framework para orquestração de multi-agentes autônomos orientados a objetivos com divisão de tarefas, memória e colaboração sequencial/hierárquica.
+* **NumPy & pgvector-python:** Manipulação eficiente de arrays multidimensionais, normalização de vetores e cálculo de similaridade por cosseno.
+* **AWS SDK for Java v2 (`software.amazon.awssdk:sqs` 2.30.0) & Boto3 (Python 1.35+):** Clientes oficiais AWS otimizados para operações assíncronas com SQS, S3 e Secrets Manager.
+* **ioredis (Node.js) & redis-py (Python):** Clientes Redis com suporte a connection pooling, pipelines e clustering.
+* **psycopg2-binary 2.9.10:** Driver PostgreSQL nativo em C de alta performance para execução de queries relacionais e operações vetoriais.
+* **HTTPX 0.28+:** Cliente HTTP assíncrono em Python com suporte a HTTP/2, pooling de conexões e timeouts granulares.
+
+#### 🗄️ Bancos de Dados, Cache & Mensageria:
+* **PostgreSQL 16 com extensão `pgvector`:** Banco de dados relacional e vetorial unificado para armazenamento de transações ACID, logs de auditoria e embeddings de conhecimento (1536 dimensões).
+* **HNSW (Hierarchical Navigable Small World):** Algoritmo de indexação vetorial multidimensional em grafo que viabiliza consultas por proximidade em tempo logarítmico ($O(\log N)$) com alta precisão (Recall > 98%).
+* **Particionamento Nativo de Tabelas (`PARTITION BY RANGE`):** Mecanismo de partição mensal por data que mantém tabelas com bilhões de linhas performáticas e permite descarte instantâneo de dados legados.
+* **Redis 7 (Alpine):** Armazenamento chave-valor em memória utilizado como Cache Semântico de embeddings (reduzindo custo de IA a zero em cache hit) e controle de Rate Limiting.
+* **Apache Kafka 3.8.0 (KRaft Mode):** Plataforma distribuída de streaming de eventos de altíssimo throughput operando em modo KRaft (sem dependência de ZooKeeper), garantindo ordenação estrita por partição (`lojista_id`).
+* **Amazon SQS (Simple Queue Service) + DLQ:** Fila de mensageria assíncrona gerenciada utilizada pelo Transactional Outbox Pattern para processamento resiliente de contestações financeiras.
+
+#### 🛡️ DevOps, DevSecOps, Testes & Qualidade:
+* **Docker & Docker Compose v2:** Conteinerização de todos os serviços com Multi-stage builds, imagens Alpine/Slim e isolamento em bridge network dedicada.
+* **Kubernetes (EKS v1.31) + Kustomize:** Orquestração declarativa de contêineres sem necessidade de templates complexos, separando base e overlays de serviços.
+* **KEDA (Kubernetes Event-driven Autoscaling):** Autoscaling orientado a eventos que escala pods de 1 a 10 réplicas baseado na profundidade de mensagens das filas SQS e partições Kafka.
+* **Horizontal Pod Autoscaler (HPA):** Dimensionamento automático de pods baseado em limites de utilização de CPU (70-80%) e Memória.
+* **Terraform 1.9+ (HashiCorp):** Provisionamento declarativo de toda a infraestrutura AWS (EKS, MSK, SQS, S3, IAM, Budgets).
+* **GitHub Actions CI/CD:** Pipeline automatizado com 5 estágios paralelos, matrix builds, quality gates e geração automática de releases semânticas.
+* **Semgrep SAST:** Análise estática de código automatizada com regras customizadas para OWASP Top 10 e conformidade bancária PCI-DSS.
+* **Trivy Scanner:** Varredura contínua de vulnerabilidades de segurança (CVEs) em pacotes de dependências e imagens Docker.
+* **Jest & ts-jest:** Framework de testes unitários e de integração perimetral no Node.js/TypeScript.
+* **JUnit 5, Mockito & Spring Boot Test:** Suíte de testes unitários, mocks de repositório e testes de integração transacional na JVM Java 26.
+* **Pytest, pytest-asyncio & pytest-cov:** Framework de testes assíncronos e auditoria de cobertura de testes na camada Python.
+
 ---
 
-## 3. Diagrama da Arquitetura do Sistema & Event Streaming
+## 3. Arquitetura de Cloud Computing AWS & FinOps
+
+A infraestrutura de nuvem do NexusPay AI Engine foi projetada para operar no modelo **Enterprise Cloud Native**, com alta disponibilidade, segurança de dados financeiros e estrita observância a práticas de **FinOps (Custo Zero e Prevenção de Gastos Inesperados)**.
+
+```
+                    ┌────────────────────────────────────────────────────────┐
+                    │                   AWS Cloud Platform                   │
+                    │                                                        │
+                    │   ┌──────────────────┐       ┌──────────────────────┐  │
+                    │   │ AWS Budgets      │       │ AWS IAM & IRSA       │  │
+                    │   │ ($1.00 Max Teto) │       │ (Menor Privilégio)   │  │
+                    │   └──────────────────┘       └──────────────────────┘  │
+                    │                                                        │
+   Internet         │   ┌─────────────────────────────────────────────────┐  │
+   ────────► [HTTPS]───►│ AWS Application Load Balancer (ALB Ingress)     │  │
+                    │   └────────────────────────┬────────────────────────┘  │
+                    │                            │                           │
+                    │   ┌────────────────────────▼────────────────────────┐  │
+                    │   │ Amazon EKS Cluster (Kubernetes v1.31)           │  │
+                    │   │  ├── Spot Instances NodeGroup (EC2 t4g/t3)      │  │
+                    │   │  ├── Edge Gateway Pods (Fastify 5)              │  │
+                    │   │  ├── Transaction Ledger Pods (Java 26 / ZGC)    │  │
+                    │   │  ├── Copilot RAG Pods (Python 3.14 / pgvector)  │  │
+                    │   │  ├── POS Diagnostics Pods (FastAPI)             │  │
+                    │   │  └── KEDA Autoscaler (ScaledObject SQS/Kafka)   │  │
+                    │   └───────┬──────────────┬──────────────┬───────────┘  │
+                    │           │              │              │              │
+                    │   ┌───────▼──────┐ ┌─────▼──────┐ ┌─────▼───────────┐  │
+                    │   │ Amazon MSK   │ │ Amazon SQS │ │ Amazon S3 Vault │  │
+                    │   │ Serverless   │ │ + DLQ (14d)│ │ + Glacier (5a)  │  │
+                    │   └──────────────┘ └────────────┘ └─────────────────┘  │
+                    │                                                        │
+                    │   ┌─────────────────────────────────────────────────┐  │
+                    │   │ LocalStack (Emulador AWS Offline p/ Custo Zero) │  │
+                    │   └─────────────────────────────────────────────────┘  │
+                    └────────────────────────────────────────────────────────┘
+```
+
+### ☁️ 3.1. Detalhamento de Cada Serviço AWS Utilizado
+
+#### 1. ☸️ Amazon EKS (Elastic Kubernetes Service) v1.31:
+* **Arquivo IaC:** [`terraform/eks.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/eks.tf)
+* **Papel no Sistema:** Orquestrador central dos 5 microsserviços. Gerencia ciclo de vida dos contêineres, service discovery via CoreDNS, rolling updates sem downtime e isolamento por namespaces (`nexuspay`).
+* **Segurança:** Integração nativa com VPC CNI em subnets privadas e públicas com controle de acesso baseado em funções (RBAC + IAM).
+
+#### 2. ⚡ Amazon EC2 Spot Instances (`t4g.medium`, `t3.medium`):
+* **Arquivo IaC:** [`terraform/eks.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/eks.tf)
+* **Papel no Sistema:** Pool de nós computacionais do cluster EKS (`aws_eks_node_group`) configurado no modo `capacity_type = "SPOT"`.
+* **Benefício FinOps:** Redução de até 90% dos custos de instâncias computacionais em comparação com instâncias On-Demand, com tolerância a falhas garantida pelo Kubernetes ReplicaSet.
+
+#### 3. 🌐 AWS ALB (Application Load Balancer) Ingress Controller:
+* **Arquivo K8s:** [`k8s/services/01-edge-gateway.yaml`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/k8s/services/01-edge-gateway.yaml)
+* **Papel no Sistema:** Ponto de terminação TLS e roteamento L7 de todo o tráfego HTTP/HTTPS externo direcionado ao Edge Gateway.
+* **Segurança:** Suporte a regras de WAF, proteção contra injeção e isolamento do perímetro interno do cluster.
+
+#### 4. 🚀 Amazon MSK Serverless (Managed Streaming for Apache Kafka):
+* **Arquivo IaC:** [`terraform/msk.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/msk.tf)
+* **Papel no Sistema:** Cluster Kafka totalmente gerenciado e sem servidor para streaming de eventos transacionais em tempo real (`nexuspay.transacoes.events`).
+* **Segurança & FinOps:** Autenticação SASL/IAM (`aws_msk_serverless_cluster`), provisionamento sob demanda sem cobrança por instâncias ociosas e isolamento por Security Group nas portas 9092-9098.
+
+#### 5. 📬 Amazon SQS (Simple Queue Service) & Dead Letter Queue (DLQ):
+* **Arquivo IaC:** [`terraform/sqs.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/sqs.tf)
+* **Papel no Sistema:** Fila principal (`transacoes-events`) para consumo assíncrono desacoplado de transações que requerem auditoria de fraude ou disputa.
+* **Resiliência:** Redrive Policy configurada com `maxReceiveCount = 5`. Mensagens que falham após 5 tentativas são enviadas para a Dead Letter Queue (`nexuspay-transacoes-events-dlq`) com retenção de até 14 dias para análise forense.
+
+#### 6. 🪣 Amazon S3 (Simple Storage Service) & Glacier Lifecycle:
+* **Arquivo IaC:** [`terraform/s3.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/s3.tf)
+* **Papel no Sistema:** Cofre de armazenamento para petições jurídicas de contestação, logs de auditoria imutáveis, recibos fiscais e base de conhecimento documental para o RAG.
+* **Segurança:** Criptografia Server-Side ativa por padrão (`AES256`) e versionamento de objetos habilitado (`versioning_configuration`).
+* **Ciclo de Vida BACEN & FinOps:** Regra de ciclo de vida (`aws_s3_bucket_lifecycle_configuration`) que transiciona objetos para **Amazon S3 Glacier** após 90 dias e define expiração definitiva após 1825 dias (5 anos), atendendo rigorosamente à regulamentação do Banco Central com custo de armazenamento insignificante.
+
+#### 7. 🎯 AWS Budgets (FinOps Zero-Cost Guardrail):
+* **Arquivo IaC:** [`terraform/budgets.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/budgets.tf)
+* **Papel no Sistema:** Trava orçamentária automatizada que monitora os custos da conta AWS em tempo real.
+* **Alertas:** Disparo imediato de e-mail ao atingir 80% ($0.80) do limite real e 100% ($1.00) do limite previsto mensal, garantindo que o projeto opere estritamente dentro do Free Tier / Custo Zero.
+
+#### 8. 🔑 AWS IAM (Identity and Access Management) & IRSA:
+* **Arquivo IaC:** [`terraform/eks.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/eks.tf)
+* **Papel no Sistema:** Gerenciamento granular de permissões através de papéis dedicados (`nexuspay-eks-cluster-role` e `nexuspay-eks-node-role`), aplicando o princípio de menor privilégio (Least Privilege) sem compartilhamento de credenciais estáticas.
+
+#### 9. 🔒 AWS Secrets Manager & Parameter Store:
+* **Papel no Sistema:** Armazenamento seguro de segredos de banco de dados, chaves criptográficas de POS e credenciais de APIs externas, injetados diretamente nos contêineres via Kubernetes Secrets.
+
+#### 10. 🤖 Amazon Bedrock (com Fallback Mock FinOps):
+* **Papel no Sistema:** Provedor de modelos de linguagem de ponta (Claude 3.5 Sonnet / Titan Embeddings) para geração de texto e representação vetorial.
+* **Modo Custo Zero:** Suporte total a fallback local determinístico via variável `USE_MOCK_LLM=true`, permitindo testes ilimitados e esteira de CI sem cobrança de tokens.
+
+#### 11. 💻 LocalStack (AWS Cloud Emulator):
+* **Arquivo Docker:** [`docker/docker-compose.yml`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/docker/docker-compose.yml)
+* **Papel no Sistema:** Emulador local 100% gratuito dos serviços AWS SQS, S3 e Secrets Manager na porta 4566, permitindo desenvolvimento e testes de integração idênticos aos da nuvem real sem necessidade de conexão com a AWS.
+
+---
+
+## 4. Diagrama da Arquitetura do Sistema & Event Streaming
 
 ```mermaid
 graph TB
@@ -96,7 +237,7 @@ graph TB
 
 ---
 
-## 4. Detalhamento dos 5 Microsserviços
+## 5. Detalhamento dos 5 Microsserviços
 
 ### 🌐 1. Edge Gateway (`services/edge-gateway`)
 * **Localização:** [`services/edge-gateway`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/edge-gateway)
@@ -104,14 +245,14 @@ graph TB
 * **Recursos:**
   * Mascaramento automático de cartões (`[CARD_FINAL_4444]`), CPFs (`[CPF_PROTEGIDO]`) e CVV (`[REDACTED]`).
   * Conexões persistentes HTTP com suporte a **Server-Sent Events (SSE)** para streaming de respostas de IA.
-  * Rate Limiting distribuído de 1.000 requisições por minuto.
+  * Rate Limiting distribuído de 1.000 requisições por minuto via Redis.
 
 ### ☕ 2. Transaction Ledger Service (`services/transaction-ledger-service`)
 * **Localização:** [`services/transaction-ledger-service`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/transaction-ledger-service)
 * **Objetivo:** Processamento transacional de alta confiabilidade com garantia de ACID e consistência eventual.
 * **Recursos:**
   * Uso de **Project Lombok** (`@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Slf4j`, `@RequiredArgsConstructor`).
-  * **Transactional Outbox Pattern**: Grava a transação e o evento na mesma transação atômica do banco, publicando de forma assíncrona no Amazon SQS via scheduler.
+  * **Transactional Outbox Pattern**: Grava a transação e o evento na mesma transação atômica do banco, publicando de forma assíncrona no Amazon SQS e Apache Kafka via scheduler.
   * Otimizações da JVM Java 26 com **ZGC Generational** e Virtual Threads para suporte a centenas de milhares de conexões concorrentes com pausamento nulo de GC.
 
 ### 💬 3. Copilot RAG Service (`services/copilot-rag-service`)
@@ -139,7 +280,7 @@ graph TB
 
 ---
 
-## 5. Camada de Inteligência Artificial & Multi-Agentes
+## 6. Camada de Inteligência Artificial & Multi-Agentes
 
 ```text
                                ┌────────────────────────┐
@@ -164,16 +305,16 @@ graph TB
 
 ---
 
-## 6. Engenharia de Dados & Persistência
+## 7. Engenharia de Dados & Persistência
 
-* **Banco de Dados Relacional:** PostgreSQL 16 com extensão **pgvector**.
+* **Banco de Dados Relacional & Vetorial:** PostgreSQL 16 com extensão **pgvector**.
 * **Índices Vetoriais:** Indexação vetorial com **HNSW (Hierarchical Navigable Small World)** operando com distância de cosseno (`vector_cosine_ops` com `m=16, ef_construction=64`).
 * **Particionamento de Tabelas:** A tabela `transacoes` é particionada nativamente por **RANGE de Data (`PARTITION BY RANGE (criado_em)`)**, garantindo escalabilidade para bilhões de registros com descarte de partições antigas em milissegundos.
 * **Auditoria PCI-DSS:** Tabela `audit_logs` imutável com logs de acesso e operações de cartões.
 
 ---
 
-## 7. Orquestração no Kubernetes (Amazon EKS) & KEDA
+## 8. Orquestração no Kubernetes (Amazon EKS) & KEDA
 
 Os manifestos de infraestrutura estão organizados via **Kustomize** no diretório [`k8s/`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/k8s):
 
@@ -189,15 +330,15 @@ k8s/
     ├── 02-transaction-ledger-service.yaml # Deployment (2-8 réplicas), ZGC e HPA
     ├── 03-copilot-rag-service.yaml     # Deployment (2-8 réplicas) com HPA
     ├── 04-pos-diagnostics-service.yaml # Deployment (2-6 réplicas) com HPA
-    └── 05-dispute-agent-worker.yaml    # Deployment com KEDA ScaledObject (Auto-scaling por SQS)
+    └── 05-dispute-agent-worker.yaml    # Deployment com KEDA ScaledObject (Auto-scaling por SQS e Kafka)
 ```
 
 ### ⚡ Event-Driven Autoscaling com KEDA:
-O worker de chargebacks escala automaticamente a quantidade de pods (de 1 até 10) de acordo com o tamanho da fila **Amazon SQS**, economizando 100% de custos computacionais quando não há contestações pendentes.
+O worker de chargebacks escala automaticamente a quantidade de pods (de 1 até 10) de acordo com o tamanho da fila **Amazon SQS** e lag do tópico Kafka, economizando 100% de custos computacionais quando não há contestações pendentes.
 
 ---
 
-## 8. FinOps & AWS Free Tier Guardrail ($1.00 Budget)
+## 9. FinOps & AWS Free Tier Guardrail ($1.00 Budget)
 
 Para viabilizar portfólio profissional com **custo zero**:
 
@@ -208,7 +349,7 @@ Para viabilizar portfólio profissional com **custo zero**:
 
 ---
 
-## 9. Esteira DevSecOps & Automated Releases no GitHub Actions
+## 10. Esteira DevSecOps & Automated Releases no GitHub Actions
 
 O arquivo [`.github/workflows/ci.yml`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/.github/workflows/ci.yml) implementa um pipeline completo de 5 estágios:
 
@@ -228,7 +369,7 @@ graph LR
 
 ---
 
-## 10. Guia de Execução Local & Testes
+## 11. Guia de Execução Local & Testes
 
 ### Pré-requisitos:
 * **Docker & Docker Compose**
@@ -263,7 +404,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ---
 
-## 11. Referência de APIs REST & SSE
+## 12. Referência de APIs REST & SSE
 
 ### 🌐 Edge Gateway (`http://localhost:8080`)
 * `GET /health` - Health Check do Gateway
