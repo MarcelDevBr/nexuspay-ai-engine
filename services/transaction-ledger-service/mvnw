@@ -1,0 +1,19 @@
+#!/bin/sh
+# Maven Wrapper auto-installer & launcher
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+MAVEN_VERSION="3.9.9"
+MAVEN_DIR="$HOME/.m2/wrapper/dists/apache-maven-$MAVEN_VERSION"
+MAVEN_BIN="$MAVEN_DIR/apache-maven-$MAVEN_VERSION/bin/mvn"
+
+if [ ! -x "$MAVEN_BIN" ]; then
+    echo "Instalando Apache Maven $MAVEN_VERSION localmente..."
+    mkdir -p "$MAVEN_DIR"
+    TMP_ZIP="/tmp/maven-$MAVEN_VERSION.zip"
+    curl -s -L -o "$TMP_ZIP" "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/$MAVEN_VERSION/apache-maven-$MAVEN_VERSION-bin.zip"
+    unzip -q -o "$TMP_ZIP" -d "$MAVEN_DIR"
+    rm -f "$TMP_ZIP"
+    chmod +x "$MAVEN_BIN"
+fi
+
+exec "$MAVEN_BIN" "$@"

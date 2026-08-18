@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -41,25 +42,26 @@ class TransacaoServiceTest {
 
     @BeforeEach
     void setUp() {
-        lojista = Lojista.builder()
-                .id("lojista_123")
-                .razao_social("Supermercado Silva")
-                .cnpjHash("cnpj_hash_mock")
-                .emailContato("contato@silva.com")
-                .status("ATIVO")
-                .build();
+        lojista = new Lojista(
+                "lojista_123",
+                "Supermercado Silva",
+                "cnpj_hash_mock",
+                "contato@silva.com",
+                "ATIVO",
+                OffsetDateTime.now()
+        );
     }
 
     @Test
     void deveAutorizarTransacaoEGravarOutboxComSucesso() {
         when(lojistaRepository.findById("lojista_123")).thenReturn(Optional.of(lojista));
 
-        TransacaoRequest request = TransacaoRequest.builder()
-                .lojistaId("lojista_123")
-                .terminalId("POS_123")
-                .valor(new BigDecimal("150.00"))
-                .tipo(TipoTransacao.CREDITO_A_VISTA)
-                .build();
+        TransacaoRequest request = new TransacaoRequest(
+                "lojista_123",
+                "POS_123",
+                new BigDecimal("150.00"),
+                TipoTransacao.CREDITO_A_VISTA
+        );
 
         TransacaoResponse response = transacaoService.processarTransacao(request);
 
@@ -77,11 +79,12 @@ class TransacaoServiceTest {
     void deveLancarExcecaoQuandoLojistaNaoExistir() {
         when(lojistaRepository.findById("lojista_inexistente")).thenReturn(Optional.empty());
 
-        TransacaoRequest request = TransacaoRequest.builder()
-                .lojistaId("lojista_inexistente")
-                .valor(new BigDecimal("100.00"))
-                .tipo(TipoTransacao.PIX)
-                .build();
+        TransacaoRequest request = new TransacaoRequest(
+                "lojista_inexistente",
+                null,
+                new BigDecimal("100.00"),
+                TipoTransacao.PIX
+        );
 
         assertThrows(IllegalArgumentException.class, () -> transacaoService.processarTransacao(request));
 
