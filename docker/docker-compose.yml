@@ -63,13 +63,13 @@ services:
       - nexus-network
 
   # ---------------------------------------------------------------------------
-  # 4. Java 21 Core Transacional (Spring Boot 3.4)
+  # 4. Core Transacional (Spring Boot / Ledger ACID)
   # ---------------------------------------------------------------------------
   transactional_core:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.java-core
-    container_name: nexuspay-java-core
+      dockerfile: docker/Dockerfile.transactional-core
+    container_name: nexuspay-transactional-core
     ports:
       - "8081:8081"
     environment:
@@ -92,13 +92,13 @@ services:
       - nexus-network
 
   # ---------------------------------------------------------------------------
-  # 5. Python 3.13 GenAI Engine (FastAPI / RAG / CrewAI)
+  # 5. GenAI Engine (FastAPI / RAG / CrewAI)
   # ---------------------------------------------------------------------------
   ai_core:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.ai-core
-    container_name: nexuspay-ai-core
+      dockerfile: docker/Dockerfile.genai-engine
+    container_name: nexuspay-genai-engine
     ports:
       - "8000:8000"
     environment:
@@ -121,13 +121,13 @@ services:
       - nexus-network
 
   # ---------------------------------------------------------------------------
-  # 6. Node.js 22 Edge API Gateway (Fastify / TypeScript)
+  # 6. Edge API Gateway (Fastify / TypeScript)
   # ---------------------------------------------------------------------------
   gateway:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.gateway
-    container_name: nexuspay-gateway
+      dockerfile: docker/Dockerfile.edge-gateway
+    container_name: nexuspay-edge-gateway
     ports:
       - "8080:8080"
     environment:

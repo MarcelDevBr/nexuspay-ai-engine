@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "NexusPay GenAI Engine, Hybrid RAG with pgvector and Autonomous Multi-Agents"
 authors = [{ name = "Marcel da Silva Almeida", email = "contato@marcelalmeida.dev" }]
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",

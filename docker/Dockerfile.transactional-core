@@ -1,10 +1,9 @@
-# Multi-stage build for Transactional Core (Java 21 / Spring Boot 3.4)
+# Multi-stage build for Transactional Core Service
 FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
 
 WORKDIR /app
 
 COPY transactional_core/pom.xml .
-# Cache de dependências Maven
 RUN mvn dependency:go-offline -B
 
 COPY transactional_core/src ./src
@@ -15,7 +14,6 @@ FROM eclipse-temurin:21-jre-alpine AS runner
 
 WORKDIR /app
 
-# Cria usuário não-root para segurança
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 

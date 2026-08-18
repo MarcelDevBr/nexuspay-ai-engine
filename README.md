@@ -2,12 +2,12 @@
 
 <div align="center">
 
-[![Java 21](https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Java 26](https://img.shields.io/badge/Java-26-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Python](https://img.shields.io/badge/Python-3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-22_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Fastify](https://img.shields.io/badge/Fastify-4.x-000000?style=for-the-badge&logo=fastify&logoColor=white)](https://fastify.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-26_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Fastify](https://img.shields.io/badge/Fastify-5.x-000000?style=for-the-badge&logo=fastify&logoColor=white)](https://fastify.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_+_pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![AWS Bedrock](https://img.shields.io/badge/AWS-Bedrock_%7C_SQS_%7C_ECS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/bedrock/)
@@ -22,7 +22,7 @@
 
 ## ⚡ Executive TL;DR (30-Second Overview)
 
-O **NexusPay AI Engine** é uma plataforma corporativa poliglota de alta escala projetada para o ecossistema financeiro e de adquirência (estilo Stone, Nubank e Stripe). A solução unifica **Node.js (Edge Gateway & SSE)**, **Java 21 (Core Transacional & Ledger ACID)** e **Python 3.13 (RAG Híbrido & Agentes CrewAI)** em torno de um repositório central unificado no **PostgreSQL 16 com `pgvector`** e **Amazon ElastiCache Redis**.
+O **NexusPay AI Engine** é uma plataforma corporativa poliglota de alta escala projetada para o ecossistema financeiro e de adquirência (estilo Stone, Nubank e Stripe). A solução unifica **Node.js 26 (Edge Gateway & SSE)**, **Java 26 (Core Transacional & Ledger ACID com Spring Boot 4)** e **Python 3.14 (RAG Híbrido & Agentes CrewAI)** em torno de um repositório central unificado no **PostgreSQL 16 com `pgvector`** e **Amazon ElastiCache Redis**.
 
 O sistema resolve o conflito clássico entre **consistência bancária estrita** e **automação inteligente com LLMs**, reduzindo custos de inferência em até **70% via Semantic Cache** e defendendo contestações de compras (*chargebacks*) de forma 100% autônoma.
 
@@ -32,8 +32,8 @@ O sistema resolve o conflito clássico entre **consistência bancária estrita**
 
 * 🛡️ **Zero Dual-Write Problem:** Unificação de dados relacionais transacionais e vetores de embedding no mesmo banco **PostgreSQL 16 (`pgvector`)** com índice **HNSW** ($O(\log N)$ e recall $>98\%$).
 * ⚡ **FinOps & Semantic Cache Sub-10ms:** Cache semântico vetorial em **Redis 7** que intercepta perguntas financeiras frequentes (similaridade de cosseno $\ge 0.92$), retornando respostas em ~10ms com **R$ 0,00 em consumo de tokens**.
-* ☕ **Garantia ACID & Transactional Outbox:** Core em **Java 21 com Virtual Threads (Loom)** utilizando *Pessimistic Locking* para prevenção de *Double Spending* e *Transactional Outbox Pattern* para entrega garantida de eventos no **Amazon SQS**.
-* 🌐 **Edge Protection & PCI-DSS Guardrails:** Gateway em **Node.js / Fastify** com sanitização determinística e mascaramento de PII (CPF, Cartão/PAN, CVV) antes de qualquer tráfego chegar às LLMs.
+* ☕ **Garantia ACID & Transactional Outbox:** Core em **Java 26 com Virtual Threads (Loom)** e **Spring Boot 4** utilizando *Pessimistic Locking* para prevenção de *Double Spending* e *Transactional Outbox Pattern* para entrega garantida de eventos no **Amazon SQS**.
+* 🌐 **Edge Protection & PCI-DSS Guardrails:** Gateway em **Node.js 26 / Fastify 5** com sanitização determinística e mascaramento de PII (CPF, Cartão/PAN, CVV) antes de qualquer tráfego chegar às LLMs.
 * 🤖 **Multi-Agentes Autônomos de Disputas (CrewAI):** Pipeline de 3 agentes especializados (Extrator de Evidências, Auditor de Compliance Bandeiras/BACEN e Defensor Jurídico-Financeiro) para montagem automatizada de dossiês de chargeback.
 * ☁️ **Enterprise Cloud-Native (AWS Bedrock & IRSA):** Modelos corporativos (Claude 3.5 Sonnet / Llama 3) executados via VPC Endpoints privados sem retenção de dados, com autenticação sem credenciais estáticas via *IAM Roles for Service Accounts (IRSA)*.
 

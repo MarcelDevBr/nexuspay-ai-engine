@@ -1,5 +1,5 @@
-# Multi-stage build for AI Core (Python 3.13 / uv)
-FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+# Multi-stage build for GenAI & Multi-Agent Engine
+FROM ghcr.io/astral-sh/uv:python3.14-bookworm-slim AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN uv pip install -e . --no-cache
 COPY ai_core/src ./src
 
 # Stage de Produção
-FROM python:3.13-slim-bookworm AS runner
+FROM python:3.14-slim-bookworm AS runner
 
 WORKDIR /app
 
@@ -23,7 +23,7 @@ ENV PYTHONUNBUFFERED=1
 
 COPY ai_core/src ./src
 
-# Cria usuário não-root
+# Cria usuário não-root para execução segura
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
 USER appuser
 

@@ -8,19 +8,19 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # 1. Testes do Edge Gateway (Node.js 22 LTS)
+  # 1. Testes do Edge Gateway (Node.js 26 LTS)
   # ---------------------------------------------------------------------------
   test-gateway:
-    name: 🌐 Test Gateway (Node.js 22)
+    name: 🌐 Test Gateway (Node.js 26)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js 26
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
           cache: 'yarn'
           cache-dependency-path: gateway/yarn.lock
 
@@ -37,20 +37,20 @@ jobs:
         run: yarn build
 
   # ---------------------------------------------------------------------------
-  # 2. Testes do Transactional Core (Java 21 / Spring Boot 3.4)
+  # 2. Testes do Transactional Core (Java 26 / Spring Boot 4)
   # ---------------------------------------------------------------------------
   test-java-core:
-    name: ☕ Test Transactional Core (Java 21)
+    name: ☕ Test Transactional Core (Java 26)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Java 21 (Eclipse Temurin)
+      - name: Setup Java 26 (Eclipse Temurin)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '26'
           cache: 'maven'
 
       - name: Run Unit Tests
@@ -58,10 +58,10 @@ jobs:
         run: mvn test
 
   # ---------------------------------------------------------------------------
-  # 3. Testes do GenAI Engine (Python 3.13 / FastAPI / CrewAI)
+  # 3. Testes do GenAI Engine (Python 3.14 / FastAPI / CrewAI)
   # ---------------------------------------------------------------------------
   test-ai-core:
-    name: 🐍 Test AI Core (Python 3.13)
+    name: 🐍 Test AI Core (Python 3.14)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -72,8 +72,8 @@ jobs:
         with:
           version: "latest"
 
-      - name: Setup Python 3.13
-        run: uv python install 3.13
+      - name: Setup Python 3.14
+        run: uv python install 3.14
 
       - name: Run Pytest
         working-directory: ./ai_core
@@ -100,19 +100,19 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile.gateway
+          file: ./docker/Dockerfile.edge-gateway
           push: false
 
-      - name: Build Java Core Image
+      - name: Build Transactional Core Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile.java-core
+          file: ./docker/Dockerfile.transactional-core
           push: false
 
-      - name: Build AI Core Image
+      - name: Build GenAI Engine Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/Dockerfile.ai-core
+          file: ./docker/Dockerfile.genai-engine
           push: false
