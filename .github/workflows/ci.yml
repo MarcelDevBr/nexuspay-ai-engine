@@ -112,7 +112,7 @@ jobs:
           yarn test:cov
 
   test-and-coverage-ledger:
-    name: 📊 2. Tests & JaCoCo Coverage - Transaction Ledger
+    name: 📊 2. Tests & Coverage - Transaction Ledger
     needs: [compile-transaction-ledger]
     runs-on: ubuntu-latest
     steps:
@@ -123,11 +123,11 @@ jobs:
           distribution: 'oracle'
           java-version: '26'
           cache: 'maven'
-      - name: Run Tests & Generate JaCoCo Report
+      - name: Run Tests
         working-directory: ./services/transaction-ledger-service
         run: |
           chmod +x mvnw
-          ./mvnw test jacoco:report
+          ./mvnw test
 
   test-and-coverage-copilot:
     name: 📊 2. Tests & Coverage - Copilot RAG
