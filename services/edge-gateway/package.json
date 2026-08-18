@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "test:cov": "jest --coverage --passWithNoTests"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",
