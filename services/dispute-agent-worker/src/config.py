@@ -13,4 +13,9 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = "test"
     SQS_QUEUE_URL: str = "http://localhost:4566/000000000000/transacoes-events"
 
+    # Apache Kafka / Amazon MSK Config
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_TOPIC_TRANSACOES: str = "nexuspay.transacoes.events"
+    KAFKA_GROUP_ID: str = "nexuspay-dispute-worker-group"
+
 settings = Settings()

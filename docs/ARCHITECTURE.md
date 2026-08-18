@@ -14,15 +14,22 @@ O NexusPay foi projetado com base em quatro pilares inegociáveis:
 
 ---
 
-## 🔄 2. Padrões de Projeto Utilizados
+## 🔄 2. Padrões de Projeto e Event Streaming
+ 
+### A. Apache Kafka / Amazon MSK Event Streaming (`services/transaction-ledger-service` & `dispute-agent-worker`)
+Para garantir alta taxa de transferência (dezenas de milhares de eventos por segundo) e desacoplamento com garantia de ordenação por chave (`lojista_id`):
+1. O `KafkaTransactionProducer` publica eventos no tópico `nexuspay.transacoes.events`.
+2. As partições do Kafka distribuem a carga de acordo com o hash da chave do lojista, garantindo que eventos do mesmo lojista sejam processados na ordem exata de emissão.
+3. O `KafkaEventConsumer` do worker de disputas consome o stream com Consumer Group balanceado (`nexuspay-dispute-worker-group`). Transações com suspeita de fraude ou valor elevado disparam automaticamente a esteira autônoma de defesa da CrewAI.
+4. No Kubernetes, o **KEDA Kafka ScaledObject** monitora o lag de mensagens nas partições do tópico e escala os pods horizontalmente de forma reativa.
 
-### A. Transactional Outbox Pattern (`services/transaction-ledger-service`)
-Ao autorizar uma transação financeira, o sistema precisa notificar outros serviços via **Amazon SQS**. Para evitar estados inconsistentes (transação gravada no banco mas mensagem falha ao ser enviada), utilizamos o Transactional Outbox:
+### B. Transactional Outbox Pattern (`services/transaction-ledger-service`)
+Ao autorizar uma transação financeira, o sistema precisa notificar outros serviços via **Apache Kafka** e **Amazon SQS**. Para evitar estados inconsistentes (transação gravada no banco mas mensagem falha ao ser enviada), utilizamos o Transactional Outbox:
 1. O `TransacaoService` grava a entidade `Transacao` e o `OutboxEvent` na mesma transação atômica do PostgreSQL.
-2. O componente agendador `OutboxPublisherScheduler` faz a leitura dos eventos com status `PENDENTE` e os publica de forma confiável no Amazon SQS.
-3. Após a confirmação de recebimento do SQS, o status é alterado para `PROCESSADO`.
+2. O componente agendador `OutboxPublisherScheduler` faz a leitura dos eventos com status `PENDENTE` e os publica de forma confiável no Apache Kafka e Amazon SQS.
+3. Após a confirmação de recebimento, o status é alterado para `PROCESSADO`.
 
-### B. Strategy Pattern para Diagnóstico de POS (`services/pos-diagnostics-service`)
+### C. Strategy Pattern para Diagnóstico de POS (`services/pos-diagnostics-service`)
 O motor de diagnóstico utiliza a interface `IDiagnosticStrategy`:
 - `CryptoKeyDiagnosticHandler`: Ativado para falhas criptográficas EMV (ex.: `ERR_58`).
 - `EmvChipDiagnosticHandler`: Ativado para erros de leitura física de chip.
@@ -30,7 +37,7 @@ O motor de diagnóstico utiliza a interface `IDiagnosticStrategy`:
 
 Novos diagnósticos podem ser adicionados sem alterar o código existente (**Open/Closed Principle**).
 
-### C. Multi-Agent Orchestration (`services/dispute-agent-worker`)
+### D. Multi-Agent Orchestration (`services/dispute-agent-worker`)
 Utiliza o framework **CrewAI** com tarefas e papéis segregados:
 - **Agente 1 (Extrator de Evidências):** Filtra metadados técnicos de telemetria e valida autenticidade de chip EMV.
 - **Agente 2 (Auditor de Compliance):** Compara prazos e regulamentos de bandeiras de cartão (Visa, Mastercard, Elo).

@@ -33,7 +33,7 @@ spec:
               cpu: 1000m
               memory: 1024Mi
 ---
-# KEDA Autoscaling baseado na quantidade de mensagens na Fila SQS (Event-Driven)
+# KEDA Autoscaling Event-Driven: Escala por lag de tópicos do Apache Kafka e fila SQS
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
 metadata:
@@ -47,6 +47,12 @@ spec:
   cooldownPeriod: 30
   pollingInterval: 15
   triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: "nexuspay-kafka.nexuspay.svc.cluster.local:9092"
+        consumerGroup: "nexuspay-dispute-worker-group"
+        topic: "nexuspay.transacoes.events"
+        lagThreshold: "10"
     - type: aws-sqs-queue
       metadata:
         queueURL: "https://sqs.us-east-1.amazonaws.com/123456789012/nexuspay-transacoes-events"

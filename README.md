@@ -48,19 +48,19 @@ O ecossistema foi construído do zero utilizando os princípios de **Clean Archi
 
 ## 2. Arquitetura de Microsserviços & Stack Tecnológica
 
-O sistema é estruturado em um **Monorepo Modular** composto por 5 microsserviços especializados e totalmente desacoplados:
+O sistema é estruturado em um **Monorepo Modular** composto por 5 microsserviços especializados e desacoplados via **Apache Kafka & Amazon SQS**:
 
 | Microsserviço | Stack Tecnológica | Porta | Responsabilidade Principal |
 | :--- | :--- | :--- | :--- |
 | **Edge Gateway** | `Node.js 26 LTS` + `Fastify 5` + `TypeScript 5.7` | `8080` | Ponto de entrada único, autenticação JWT Bearer, Rate Limiting, Sanitização PII PCI-DSS e SSE Streaming. |
-| **Transaction Ledger Service** | `Java 26` + `Spring Boot 4.0.0-SNAPSHOT` + `Lombok` | `8081` | Core transacional com Virtual Threads (Project Loom), JVM ZGC Generational e Transactional Outbox Pattern. |
-| **Copilot RAG Service** | `Python 3.14` + `FastAPI` + `pgvector` + `Redis` | `8000` | Motor de RAG Híbrido (Vetorial HNSW + BM25), roteador inteligente de LLMs e Cache Semântico. |
-| **POS Diagnostics Service** | `Python 3.14` + `FastAPI` + `Pydantic v2` | `8002` | Telemetria de maquininhas de cartão, análise de códigos de erro ISO 8583 e sincronismo EMV/PINPAD. |
-| **Dispute Agent Worker** | `Python 3.14` + `CrewAI` + `Boto3 SQS` | Worker | Worker assíncrono orientado a eventos para resolução automática de chargebacks via multi-agentes. |
+| **Transaction Ledger Service** | `Java 26` + `Spring Boot 4.0.0-SNAPSHOT` + `Lombok` | `8081` | Core transacional com Virtual Threads, Producer Apache Kafka e Transactional Outbox Pattern. |
+| **Copilot RAG Service** | `Python 3.14` + `FastAPI` + `pgvector` + `Redis` | `8000` | Motor de RAG Híbrido (Vetorial HNSW + BM25), roteador de LLMs e Cache Semântico. |
+| **POS Diagnostics Service** | `Python 3.14` + `FastAPI` + `Pydantic v2` | `8002` | Telemetria de maquininhas de cartão, análise ISO 8583 e sincronismo EMV/PINPAD. |
+| **Dispute Agent Worker** | `Python 3.14` + `CrewAI` + `Kafka Consumer` + `SQS` | Worker | Worker assíncrono para resolução de chargebacks via streaming Kafka e filas SQS com KEDA. |
 
 ---
 
-## 3. Diagrama da Arquitetura do Sistema
+## 3. Diagrama da Arquitetura do Sistema & Event Streaming
 
 ```mermaid
 graph TB
@@ -77,14 +77,20 @@ graph TB
         Gateway -->|/api/v1/pos| POS[📟 POS Diagnostics - Python 3.14]
     end
 
-    subgraph "Inteligência Artificial & Agentes"
-        Copilot -->|1. Busca Similaridade| Cache[⚡ Redis Semantic Cache]
-        Copilot -->|2. RAG Híbrido| PGVec[(🐘 Aurora PostgreSQL + pgvector)]
-        Core -->|Outbox Pattern| SQS[📬 Amazon SQS Events Queue]
-        SQS -->|KEDA Autoscaling| DisputeWorker[🤖 Dispute Crew Worker]
+    subgraph "Event Streaming & Messaging (AWS & Kafka)"
+        Core -->|Transactional Outbox| Kafka[⚡ Apache Kafka / Amazon MSK]
+        Core -->|Notificações Assíncronas| SQS[📬 Amazon SQS Events Queue]
+        Kafka -->|Consumer Group em Tempo Real| DisputeWorker[🤖 Dispute Crew Worker]
+        SQS -->|KEDA Autoscaling| DisputeWorker
+    end
+
+    subgraph "Inteligência Artificial, Storage & Dados"
+        Copilot -->|1. Busca Similaridade| Cache[⚡ Amazon ElastiCache / Redis]
+        Copilot -->|2. RAG Híbrido| PGVec[(🐘 Amazon Aurora PostgreSQL + pgvector)]
         DisputeWorker --> Ag1[🔍 Extrator de Evidências]
         DisputeWorker --> Ag2[⚖️ Auditor de Compliance]
         DisputeWorker --> Ag3[✍️ Redator Jurídico]
+        DisputeWorker -->|Arquivamento Fiscal| S3[(🪣 Amazon S3 Vault + Glacier Lifecycle)]
     end
 ```
 
