@@ -1,13 +1,17 @@
-# Standalone Dockerfile for Transactional Core
-FROM maven:3.9.9-eclipse-temurin-21-alpine AS builder
+# Standalone Dockerfile for Transaction Ledger Service (Java 26 / Spring Boot 4)
+FROM eclipse-temurin:21-jdk-alpine AS builder
 
 WORKDIR /app
 
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
+RUN apk add --no-cache curl bash unzip
+
+COPY pom.xml mvnw ./
+COPY .mvn ./.mvn
+
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B || true
 
 COPY src ./src
-RUN mvn clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
 # Stage de Produção
 FROM eclipse-temurin:21-jre-alpine AS runner

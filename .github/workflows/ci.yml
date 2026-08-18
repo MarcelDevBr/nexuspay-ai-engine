@@ -7,9 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # 1. Edge Gateway (Node.js 26)
-  # ---------------------------------------------------------------------------
+  # ===========================================================================
+  # ETAPA 1: TESTES UNITÁRIOS E DE DOMÍNIO (PARALELO)
+  # ===========================================================================
+
   test-edge-gateway:
     name: 🌐 Edge Gateway (Node.js 26)
     runs-on: ubuntu-latest
@@ -25,9 +26,6 @@ jobs:
           yarn test
           yarn build
 
-  # ---------------------------------------------------------------------------
-  # 2. Transaction Ledger Service (Java 26 / Spring Boot 4)
-  # ---------------------------------------------------------------------------
   test-transaction-ledger-service:
     name: ☕ Transaction Ledger (Java 26 / Spring Boot 4)
     runs-on: ubuntu-latest
@@ -45,9 +43,6 @@ jobs:
           chmod +x mvnw
           ./mvnw test
 
-  # ---------------------------------------------------------------------------
-  # 3. Copilot RAG Service (Python 3.14)
-  # ---------------------------------------------------------------------------
   test-copilot-rag-service:
     name: 💬 Copilot RAG Service (Python 3.14)
     runs-on: ubuntu-latest
@@ -64,9 +59,6 @@ jobs:
           uv pip install -e ".[dev]"
           uv run pytest
 
-  # ---------------------------------------------------------------------------
-  # 4. POS Diagnostics Service (Python 3.14)
-  # ---------------------------------------------------------------------------
   test-pos-diagnostics-service:
     name: 📟 POS Diagnostics Service (Python 3.14)
     runs-on: ubuntu-latest
@@ -83,9 +75,6 @@ jobs:
           uv pip install -e ".[dev]"
           uv run pytest
 
-  # ---------------------------------------------------------------------------
-  # 5. Dispute Agent Worker (Python 3.14)
-  # ---------------------------------------------------------------------------
   test-dispute-agent-worker:
     name: 🤖 Dispute Agent Worker (Python 3.14)
     runs-on: ubuntu-latest
@@ -102,9 +91,10 @@ jobs:
           uv pip install -e ".[dev]"
           uv run pytest
 
-  # ---------------------------------------------------------------------------
-  # 6. Kubernetes & Kustomize Manifests Validation (Amazon EKS)
-  # ---------------------------------------------------------------------------
+  # ===========================================================================
+  # ETAPA 2: VALIDAÇÃO DE INFRAESTRUTURA & FINOPS (PARALELO)
+  # ===========================================================================
+
   validate-kubernetes-manifests:
     name: ☸️ Kubernetes EKS Manifests (Kustomize)
     runs-on: ubuntu-latest
@@ -116,55 +106,52 @@ jobs:
         run: |
           kustomize build k8s/
 
-  # ---------------------------------------------------------------------------
-  # 7. Docker Build Verification dos 5 Microsserviços
-  # ---------------------------------------------------------------------------
-  docker-build-verification:
-    name: 🐳 Docker Build Verification (5 Microservices)
+  validate-terraform-finops:
+    name: ☁️ Terraform & FinOps Budget Guard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.0"
+      - name: Terraform Init & Validate
+        working-directory: ./terraform
+        run: |
+          terraform init -backend=false
+          terraform fmt -check
+          terraform validate
+
+  # ===========================================================================
+  # ETAPA 3: BUILD PARALELO DOS CONTÊINERES (MATRIX STRATEGY)
+  # ===========================================================================
+
+  build-containers:
+    name: 🐳 Docker Build (${{ matrix.service.name }})
     needs: [
       test-edge-gateway,
       test-transaction-ledger-service,
       test-copilot-rag-service,
       test-pos-diagnostics-service,
       test-dispute-agent-worker,
-      validate-kubernetes-manifests
+      validate-kubernetes-manifests,
+      validate-terraform-finops
     ]
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - { name: "edge-gateway", dir: "services/edge-gateway" }
+          - { name: "transaction-ledger-service", dir: "services/transaction-ledger-service" }
+          - { name: "copilot-rag-service", dir: "services/copilot-rag-service" }
+          - { name: "pos-diagnostics-service", dir: "services/pos-diagnostics-service" }
+          - { name: "dispute-agent-worker", dir: "services/dispute-agent-worker" }
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
-
-      - name: Build Edge Gateway
+      - name: Build Container Image
         uses: docker/build-push-action@v5
         with:
-          context: ./services/edge-gateway
-          file: ./services/edge-gateway/Dockerfile
-          push: false
-
-      - name: Build Transaction Ledger Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/transaction-ledger-service
-          file: ./services/transaction-ledger-service/Dockerfile
-          push: false
-
-      - name: Build Copilot RAG Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/copilot-rag-service
-          file: ./services/copilot-rag-service/Dockerfile
-          push: false
-
-      - name: Build POS Diagnostics Service
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/pos-diagnostics-service
-          file: ./services/pos-diagnostics-service/Dockerfile
-          push: false
-
-      - name: Build Dispute Agent Worker
-        uses: docker/build-push-action@v5
-        with:
-          context: ./services/dispute-agent-worker
-          file: ./services/dispute-agent-worker/Dockerfile
+          context: ./${{ matrix.service.dir }}
+          file: ./${{ matrix.service.dir }}/Dockerfile
           push: false
