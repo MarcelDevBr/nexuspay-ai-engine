@@ -1,0 +1,118 @@
+name: 🚀 NexusPay CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Testes do Edge Gateway (Node.js 22 LTS)
+  # ---------------------------------------------------------------------------
+  test-gateway:
+    name: 🌐 Test Gateway (Node.js 22)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'yarn'
+          cache-dependency-path: gateway/yarn.lock
+
+      - name: Install Dependencies
+        working-directory: ./gateway
+        run: yarn install --frozen-lockfile || yarn install
+
+      - name: Run Tests
+        working-directory: ./gateway
+        run: yarn test
+
+      - name: Build TypeScript
+        working-directory: ./gateway
+        run: yarn build
+
+  # ---------------------------------------------------------------------------
+  # 2. Testes do Transactional Core (Java 21 / Spring Boot 3.4)
+  # ---------------------------------------------------------------------------
+  test-java-core:
+    name: ☕ Test Transactional Core (Java 21)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 (Eclipse Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      - name: Run Unit Tests
+        working-directory: ./transactional_core
+        run: mvn test
+
+  # ---------------------------------------------------------------------------
+  # 3. Testes do GenAI Engine (Python 3.13 / FastAPI / CrewAI)
+  # ---------------------------------------------------------------------------
+  test-ai-core:
+    name: 🐍 Test AI Core (Python 3.13)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Setup Python 3.13
+        run: uv python install 3.13
+
+      - name: Run Pytest
+        working-directory: ./ai_core
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          uv run pytest --cov=src
+
+  # ---------------------------------------------------------------------------
+  # 4. Validação de Build dos Contêineres Docker
+  # ---------------------------------------------------------------------------
+  docker-build-verification:
+    name: 🐳 Docker Build Verification
+    needs: [test-gateway, test-java-core, test-ai-core]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Gateway Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.gateway
+          push: false
+
+      - name: Build Java Core Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.java-core
+          push: false
+
+      - name: Build AI Core Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.ai-core
+          push: false

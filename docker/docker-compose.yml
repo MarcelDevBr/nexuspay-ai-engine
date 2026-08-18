@@ -1,0 +1,156 @@
+services:
+  # ---------------------------------------------------------------------------
+  # 1. PostgreSQL 16 com extensão nativa pgvector
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: nexuspay-postgres
+    environment:
+      POSTGRES_USER: nexus_user
+      POSTGRES_PASSWORD: nexus_password
+      POSTGRES_DB: nexuspay_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus_user -d nexuspay_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # ---------------------------------------------------------------------------
+  # 2. Redis 7 (Semantic Cache & Rate Limiting)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: nexuspay-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # ---------------------------------------------------------------------------
+  # 3. LocalStack (Simulador AWS SQS / S3 / SecretsManager sem custos)
+  # ---------------------------------------------------------------------------
+  localstack:
+    image: localstack/localstack:latest
+    container_name: nexuspay-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs,s3,secretsmanager
+      - AWS_DEFAULT_REGION=us-east-1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - localstackdata:/var/lib/localstack
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:4566/_localstack/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexus-network
+
+  # ---------------------------------------------------------------------------
+  # 4. Java 21 Core Transacional (Spring Boot 3.4)
+  # ---------------------------------------------------------------------------
+  transactional_core:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.java-core
+    container_name: nexuspay-java-core
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=nexuspay_db
+      - DB_USER=nexus_user
+      - DB_PASSWORD=nexus_password
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - nexus-network
+
+  # ---------------------------------------------------------------------------
+  # 5. Python 3.13 GenAI Engine (FastAPI / RAG / CrewAI)
+  # ---------------------------------------------------------------------------
+  ai_core:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.ai-core
+    container_name: nexuspay-ai-core
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=docker
+      - POSTGRES_URL=postgresql://nexus_user:nexus_password@postgres:5432/nexuspay_db
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_ENDPOINT_URL=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - USE_MOCK_LLM=true # Garante 0 custo rodando localmente ou com LocalStack
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    networks:
+      - nexus-network
+
+  # ---------------------------------------------------------------------------
+  # 6. Node.js 22 Edge API Gateway (Fastify / TypeScript)
+  # ---------------------------------------------------------------------------
+  gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.gateway
+    container_name: nexuspay-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - REDIS_URL=redis://redis:6379
+      - JAVA_CORE_URL=http://transactional_core:8081
+      - AI_CORE_URL=http://ai_core:8000
+    depends_on:
+      redis:
+        condition: service_healthy
+      transactional_core:
+        condition: service_started
+      ai_core:
+        condition: service_started
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  localstackdata:
