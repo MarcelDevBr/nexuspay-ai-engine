@@ -103,7 +103,21 @@ jobs:
           uv run pytest
 
   # ---------------------------------------------------------------------------
-  # 6. Docker Build Verification dos 5 Microsserviços
+  # 6. Kubernetes & Kustomize Manifests Validation (Amazon EKS)
+  # ---------------------------------------------------------------------------
+  validate-kubernetes-manifests:
+    name: ☸️ Kubernetes EKS Manifests (Kustomize)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Kustomize
+        uses: imranismail/setup-kustomize@v2
+      - name: Validate Kustomize Build
+        run: |
+          kustomize build k8s/
+
+  # ---------------------------------------------------------------------------
+  # 7. Docker Build Verification dos 5 Microsserviços
   # ---------------------------------------------------------------------------
   docker-build-verification:
     name: 🐳 Docker Build Verification (5 Microservices)
@@ -112,7 +126,8 @@ jobs:
       test-transaction-ledger-service,
       test-copilot-rag-service,
       test-pos-diagnostics-service,
-      test-dispute-agent-worker
+      test-dispute-agent-worker,
+      validate-kubernetes-manifests
     ]
     runs-on: ubuntu-latest
     steps:

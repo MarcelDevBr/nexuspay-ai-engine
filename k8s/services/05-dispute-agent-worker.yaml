@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dispute-agent-worker
+  namespace: nexuspay
+  labels:
+    app: dispute-agent-worker
+    tier: async-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dispute-agent-worker
+  template:
+    metadata:
+      labels:
+        app: dispute-agent-worker
+    spec:
+      containers:
+        - name: dispute-agent-worker
+          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/nexuspay/dispute-agent-worker:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: nexuspay-config
+            - secretRef:
+                name: nexuspay-secrets
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+---
+# KEDA Autoscaling baseado na quantidade de mensagens na Fila SQS (Event-Driven)
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: dispute-worker-scaler
+  namespace: nexuspay
+spec:
+  scaleTargetRef:
+    name: dispute-agent-worker
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  cooldownPeriod: 30
+  pollingInterval: 15
+  triggers:
+    - type: aws-sqs-queue
+      metadata:
+        queueURL: "https://sqs.us-east-1.amazonaws.com/123456789012/nexuspay-transacoes-events"
+        queueLength: "5"
+        awsRegion: "us-east-1"

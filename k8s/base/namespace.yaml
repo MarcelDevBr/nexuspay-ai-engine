@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexuspay
+  labels:
+    app.kubernetes.io/name: nexuspay
+    app.kubernetes.io/managed-by: kustomize
+    environment: production

@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nexuspay-config
+  namespace: nexuspay
+data:
+  NODE_ENV: "production"
+  PORT: "8080"
+  SPRING_PROFILES_ACTIVE: "prod"
+  ENV: "production"
+  AWS_REGION: "us-east-1"
+  USE_MOCK_LLM: "true"
+  SQS_QUEUE_URL: "https://sqs.us-east-1.amazonaws.com/123456789012/nexuspay-transacoes-events"
+  REDIS_HOST: "nexuspay-redis.nexuspay.svc.cluster.local"
+  REDIS_PORT: "6379"
+  DB_HOST: "nexuspay-aurora-postgres.nexuspay.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_NAME: "nexuspay_db"
+  COPILOT_SERVICE_URL: "http://copilot-rag-service.nexuspay.svc.cluster.local:8000"
+  POS_DIAGNOSTICS_URL: "http://pos-diagnostics-service.nexuspay.svc.cluster.local:8002"
+  TRANSACTIONAL_CORE_URL: "http://transaction-ledger-service.nexuspay.svc.cluster.local:8081"

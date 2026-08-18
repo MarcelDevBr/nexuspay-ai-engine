@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-ledger-service
+  namespace: nexuspay
+  labels:
+    app: transaction-ledger-service
+    tier: transactional-core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: transaction-ledger-service
+  template:
+    metadata:
+      labels:
+        app: transaction-ledger-service
+    spec:
+      containers:
+        - name: transaction-ledger-service
+          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/nexuspay/transaction-ledger-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+              name: http
+          envFrom:
+            - configMapRef:
+                name: nexuspay-config
+            - secretRef:
+                name: nexuspay-secrets
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://nexuspay-aurora-postgres.nexuspay.svc.cluster.local:5432/nexuspay_db"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: nexuspay-secrets
+                  key: DB_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nexuspay-secrets
+                  key: DB_PASSWORD
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseZGC -XX:+ZGenerational -XX:MaxRAMPercentage=75.0"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-ledger-service
+  namespace: nexuspay
+  labels:
+    app: transaction-ledger-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8081
+      targetPort: 8081
+      protocol: TCP
+      name: http
+  selector:
+    app: transaction-ledger-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: transaction-ledger-hpa
+  namespace: nexuspay
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: transaction-ledger-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: copilot-rag-service
+  namespace: nexuspay
+  labels:
+    app: copilot-rag-service
+    tier: genai-core
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: copilot-rag-service
+  template:
+    metadata:
+      labels:
+        app: copilot-rag-service
+    spec:
+      containers:
+        - name: copilot-rag-service
+          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/nexuspay/copilot-rag-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: nexuspay-config
+            - secretRef:
+                name: nexuspay-secrets
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://nexus_admin:NexusSecurePassword2026!@nexuspay-aurora-postgres.nexuspay.svc.cluster.local:5432/nexuspay_db"
+            - name: REDIS_URL
+              value: "redis://nexuspay-redis.nexuspay.svc.cluster.local:6379/0"
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 800m
+              memory: 1024Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: copilot-rag-service
+  namespace: nexuspay
+  labels:
+    app: copilot-rag-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: copilot-rag-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: copilot-rag-hpa
+  namespace: nexuspay
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: copilot-rag-service
+  minReplicas: 2
+  maxReplicas: 8
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 75

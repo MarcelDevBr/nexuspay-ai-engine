@@ -94,13 +94,43 @@ graph TD
 
 ---
 
+## ☸️ Orquestração de Contêineres no Amazon EKS (Kubernetes)
+
+O ecossistema conta com manifestos declarativos **Kustomize / Kubernetes (EKS v1.31)** para orquestração de produção com alta resiliência e auto-scaling:
+
+```text
+k8s/
+├── kustomization.yaml                  # Orquestrador Kustomize
+├── base/
+│   ├── namespace.yaml                  # Namespace 'nexuspay' isolado
+│   ├── configmap.yaml                  # Variáveis globais de ambiente
+│   └── secrets.yaml                    # Segredos e chaves de API protegidas
+└── services/
+    ├── 01-edge-gateway.yaml            # Deployment (2-10 réplicas), HPA e Ingress AWS ALB
+    ├── 02-transaction-ledger-service.yaml # Deployment (2-8 réplicas), JVM ZGC Generational e HPA
+    ├── 03-copilot-rag-service.yaml     # Deployment (2-8 réplicas) com HPA
+    ├── 04-pos-diagnostics-service.yaml # Deployment (2-6 réplicas) com HPA
+    └── 05-dispute-agent-worker.yaml    # Deployment com KEDA ScaledObject (Auto-scaling por fila SQS)
+```
+
+### 🚀 Highlights de Kubernetes no NexusPay:
+1. **AWS ALB Ingress Controller:** Roteamento com terminação TLS e baixa latência.
+2. **Horizontal Pod Autoscaling (HPA):** Escalabilidade automática baseada em consumo de CPU e Memória.
+3. **KEDA (Kubernetes Event-driven Autoscaling):** O worker de chargebacks escala de 1 até 10 pods dinamicamente de acordo com o volume de eventos na fila SQS.
+4. **Infraestrutura via Terraform (`terraform/eks.tf`):** Provisionamento de Cluster EKS com Node Groups EC2 Spot para manter conformidade rigorosa de FinOps.
+
+---
+
 ## 📂 Estrutura do Monorepo
 
 ```text
 nexuspay-ai-engine/
 ├── .github/workflows/
-│   ├── ci.yml                          # Matriz CI dos 5 microsserviços + Docker Buildx
+│   ├── ci.yml                          # Matriz CI dos 5 microsserviços + Validação K8s Kustomize
 │   └── terraform-validate.yml          # Validação de IaC e FinOps Guardrails
+├── k8s/                                # Manifestos Kubernetes Kustomize (Amazon EKS)
+│   ├── base/                           # Namespace, ConfigMaps e Secrets
+│   └── services/                       # Deployments, Services, HPAs, KEDA e Ingress
 ├── docker/
 │   ├── docker-compose.yml              # Sobe os 5 microsserviços + PostgreSQL (pgvector) + Redis + LocalStack
 │   └── init-db/
@@ -108,12 +138,13 @@ nexuspay-ai-engine/
 │       └── 02-seed.sql                 # Dados iniciais
 ├── terraform/
 │   ├── main.tf                         # Configuração AWS & LocalStack
+│   ├── eks.tf                          # Cluster Amazon EKS & Spot Node Groups
 │   ├── budgets.tf                      # FinOps Guardrail ($1.00 Budget Limit)
 │   └── sqs.tf                          # Filas SQS & DLQ
 │
 └── services/
     ├── edge-gateway/                   # [Node.js 26 / Fastify 5]
-    ├── transaction-ledger-service/     # [Java 26 / Spring Boot 4]
+    ├── transaction-ledger-service/     # [Java 26 / Spring Boot 4 / Lombok]
     ├── copilot-rag-service/            # [Python 3.14 / FastAPI / pgvector]
     ├── pos-diagnostics-service/        # [Python 3.14 / FastAPI / IoT]
     └── dispute-agent-worker/           # [Python 3.14 / CrewAI / SQS Worker]

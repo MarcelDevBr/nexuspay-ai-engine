@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pos-diagnostics-service
+  namespace: nexuspay
+  labels:
+    app: pos-diagnostics-service
+    tier: iot-telemetry
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: pos-diagnostics-service
+  template:
+    metadata:
+      labels:
+        app: pos-diagnostics-service
+    spec:
+      containers:
+        - name: pos-diagnostics-service
+          image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/nexuspay/pos-diagnostics-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8002
+              name: http
+          envFrom:
+            - configMapRef:
+                name: nexuspay-config
+            - secretRef:
+                name: nexuspay-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pos-diagnostics-service
+  namespace: nexuspay
+  labels:
+    app: pos-diagnostics-service
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+      protocol: TCP
+      name: http
+  selector:
+    app: pos-diagnostics-service
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pos-diagnostics-hpa
+  namespace: nexuspay
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: pos-diagnostics-service
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
