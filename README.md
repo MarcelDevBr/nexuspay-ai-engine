@@ -1,261 +1,287 @@
-# 🚀 NexusPay AI Engine
-
 <div align="center">
 
-[![Java 26](https://img.shields.io/badge/Java-26-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://openjdk.org/)
-[![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
-[![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Node.js](https://img.shields.io/badge/Node.js-26_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Fastify](https://img.shields.io/badge/Fastify-5.x-000000?style=for-the-badge&logo=fastify&logoColor=white)](https://fastify.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16_+_pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
-[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![AWS Bedrock](https://img.shields.io/badge/AWS-Bedrock_%7C_SQS_%7C_ECS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/bedrock/)
+# ⚡ NexusPay AI Engine
 
-**Enterprise Polyglot GenAI Platform & Autonomous Multi-Agent Ecosystem for High-Scale Financial Systems**
+### *Plataforma Enterprise de Pagamentos Digitais, RAG Híbrido e Orquestração de Agentes Autônomos de IA*
 
-[Visão Geral](#-executive-tldr-30-second-overview) • [Destaques de Engenharia](#-key-engineering-highlights) • [Arquitetura](#-arquitetura-do-ecossistema) • [Módulos](#-os-5-módulos-especializados) • [Quick Start](#-quick-start-em-1-comando) • [Documentação Completa](docs/projeto_unificado_nexuspay_genai.md)
+[![DevSecOps Pipeline](https://github.com/MarcelDevBr/nexuspay-ai-engine/actions/workflows/ci.yml/badge.svg)](https://github.com/MarcelDevBr/nexuspay-ai-engine/actions/workflows/ci.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-26.x%20LTS-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![Java](https://img.shields.io/badge/Java-26%20Early%20Access-ED8B00?logo=openjdk&logoColor=white)](https://jdk.java.net/26/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.0--SNAPSHOT-6DB33F?logo=springboot&logoColor=white)](https://spring.io)
+[![Python](https://img.shields.io/badge/Python-3.14.x-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-EKS%20v1.31-326CE5?logo=kubernetes&logoColor=white)](https://kubernetes.io)
+[![Terraform](https://img.shields.io/badge/Terraform-1.9.0-7B42BC?logo=terraform&logoColor=white)](https://www.terraform.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
 
 ---
 
-## ⚡ Executive TL;DR (30-Second Overview)
-
-O **NexusPay AI Engine** é uma plataforma corporativa poliglota de alta escala projetada para o ecossistema financeiro e de adquirência (estilo Stone, Nubank e Stripe). A solução unifica **Node.js 26 (Edge Gateway & SSE)**, **Java 26 (Core Transacional & Ledger ACID com Spring Boot 4)** e **Python 3.14 (RAG Híbrido & Agentes CrewAI)** em torno de um repositório central unificado no **PostgreSQL 16 com `pgvector`** e **Amazon ElastiCache Redis**.
-
-O sistema resolve o conflito clássico entre **consistência bancária estrita** e **automação inteligente com LLMs**, reduzindo custos de inferência em até **70% via Semantic Cache** e defendendo contestações de compras (*chargebacks*) de forma 100% autônoma.
-
----
-
-## 💎 Key Engineering Highlights
-
-* 🛡️ **Zero Dual-Write Problem:** Unificação de dados relacionais transacionais e vetores de embedding no mesmo banco **PostgreSQL 16 (`pgvector`)** com índice **HNSW** ($O(\log N)$ e recall $>98\%$).
-* ⚡ **FinOps & Semantic Cache Sub-10ms:** Cache semântico vetorial em **Redis 7** que intercepta perguntas financeiras frequentes (similaridade de cosseno $\ge 0.92$), retornando respostas em ~10ms com **R$ 0,00 em consumo de tokens**.
-* ☕ **Garantia ACID & Transactional Outbox:** Core em **Java 26 com Virtual Threads (Loom)** e **Spring Boot 4** utilizando *Pessimistic Locking* para prevenção de *Double Spending* e *Transactional Outbox Pattern* para entrega garantida de eventos no **Amazon SQS**.
-* 🌐 **Edge Protection & PCI-DSS Guardrails:** Gateway em **Node.js 26 / Fastify 5** com sanitização determinística e mascaramento de PII (CPF, Cartão/PAN, CVV) antes de qualquer tráfego chegar às LLMs.
-* 🤖 **Multi-Agentes Autônomos de Disputas (CrewAI):** Pipeline de 3 agentes especializados (Extrator de Evidências, Auditor de Compliance Bandeiras/BACEN e Defensor Jurídico-Financeiro) para montagem automatizada de dossiês de chargeback.
-* ☁️ **Enterprise Cloud-Native (AWS Bedrock & IRSA):** Modelos corporativos (Claude 3.5 Sonnet / Llama 3) executados via VPC Endpoints privados sem retenção de dados, com autenticação sem credenciais estáticas via *IAM Roles for Service Accounts (IRSA)*.
+## 📌 Sumário
+- [1. Visão Geral do Projeto](#1-visão-geral-do-projeto)
+- [2. Arquitetura de Microsserviços & Stack Tecnológica](#2-arquitetura-de-microsserviços--stack-tecnológica)
+- [3. Diagrama da Arquitetura do Sistema](#3-diagrama-da-arquitetura-do-sistema)
+- [4. Detalhamento dos 5 Microsserviços](#4-detalhamento-dos-5-microsserviços)
+- [5. Camada de Inteligência Artificial & Multi-Agentes](#5-camada-de-inteligência-artificial--multi-agentes)
+- [6. Engenharia de Dados & Persistência](#6-engenharia-de-dados--persistência)
+- [7. Orquestração no Kubernetes (Amazon EKS) & KEDA](#7-orquestração-no-kubernetes-amazon-eks--keda)
+- [8. FinOps & AWS Free Tier Guardrail ($1.00 Budget)](#8-finops--aws-free-tier-guardrail-100-budget)
+- [9. Esteira DevSecOps & Automated Releases no GitHub Actions](#9-esteira-devsecops--automated-releases-no-github-actions)
+- [10. Guia de Execução Local & Testes](#10-guia-de-execução-local--testes)
+- [11. Referência de APIs REST & SSE](#11-referência-de-apis-rest--sse)
 
 ---
 
-## 🧭 Matriz da Arquitetura Poliglota
+## 1. Visão Geral do Projeto
 
-A escolha de três linguagens reflete a alocação de cada tecnologia no seu ponto de máxima eficiência:
+O **NexusPay AI Engine** é uma plataforma de tecnologia financeira de alta resiliência e ultra-baixa latência projetada para processar transações financeiras em larga escala, oferecer diagnósticos automatizados de hardware de POS e resolver disputas de chargebacks através de **Agentes Autônomos de IA Generativa**.
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                  ARQUITETURA POLIGLOTA NEXUSPAY                                  │
-├──────────────────────────────┬──────────────────────────────────┬────────────────────────────────┤
-│ 🌐 Borda & I/O em Tempo Real │ ☕ Core Transacional & Ledger    │ 🐍 Inteligência Artificial     │
-│ Node.js 22 / Fastify / TS    │ Java 21 / Spring Boot 4          │ Python 3.13 / FastAPI / CrewAI │
-│ (Alta Concorrência de I/O)   │ (Consistência ACID & Resiliência)│ (Ecossistema de IA e LLMs)     │
-└──────────────────────────────┴──────────────────────────────────┴────────────────────────────────┘
-```
+O ecossistema foi construído do zero utilizando os princípios de **Clean Architecture**, **SOLID**, **Domain-Driven Design (DDD)** e **FinOps**, operando 100% nas versões mais modernas das tecnologias de ponta do mercado (Node.js 26, Java 26, Spring Boot 4 com Lombok e Python 3.14).
 
-| Camada | Stack Principal | Responsabilidade Primária | Por que esta tecnologia? |
+### 🎯 Principais Diferenciais:
+1. **Ultra-Baixa Latência & Edge Security:** Proteção nativa PCI-DSS com mascaramento em voo de dados sensíveis (PII Sanitizer) e streaming de tokens via Server-Sent Events (SSE).
+2. **RAG Híbrido com Cache Semântico:** Busca vetorial combinada (pgvector HNSW + Busca Lexical BM25) com cache semântico em memória no Redis que reduz o custo de LLM para R$ 0,00 e latência para 10ms em perguntas frequentes.
+3. **Crew de Multi-Agentes de Chargeback:** 3 agentes autônomos (Extrator de Evidências, Auditor de Compliance de Bandeiras e Redator Jurídico) que geram defesas formais de contestações financeiras automaticamente.
+4. **Resiliência Transacional:** Padrão **Transactional Outbox** em Java 26 que garante consistência eventual atômica entre o banco relacional e mensageria assíncrona (Amazon SQS).
+
+---
+
+## 2. Arquitetura de Microsserviços & Stack Tecnológica
+
+O sistema é estruturado em um **Monorepo Modular** composto por 5 microsserviços especializados e totalmente desacoplados:
+
+| Microsserviço | Stack Tecnológica | Porta | Responsabilidade Principal |
 | :--- | :--- | :--- | :--- |
-| **🌐 Edge Gateway** | Node.js 22, Fastify, TypeScript | Proxy reverso, Rate Limiting, PII Masking, Streaming SSE | Event-loop não bloqueante com baixo consumo de memória para milhares de conexões persistentes. |
-| **☕ Core Transacional** | Java 21, Spring Boot 4, Hibernate | Ledger imutável, autorização, liquidação PIX, Outbox SQS | Tipagem estática robusta, Virtual Threads (Loom) e maturidade absoluta em transações ACID. |
-| **🐍 GenAI Engine** | Python 3.13, FastAPI, CrewAI, Pydantic v2 | RAG Híbrido, Multi-Agentes, Smart Router, Embeddings | Padrão da indústria para ecossistema de LLMs, rerankers locais e orquestração de agentes. |
-| **🐘 Persistência Unificada** | PostgreSQL 16 + `pgvector` | Base relacional ACID + Busca vetorial (HNSW) | Elimina a complexidade e o risco de inconsistência de bancos vetoriais dedicados isolados. |
-| **⚡ Cache Semântico** | Redis 7 Cluster | Cache vetorial em memória, Rate Limit distribuído | Busca de similaridade em submilisegundos para economia massiva de tokens de LLM. |
+| **Edge Gateway** | `Node.js 26 LTS` + `Fastify 5` + `TypeScript 5.7` | `8080` | Ponto de entrada único, autenticação JWT Bearer, Rate Limiting, Sanitização PII PCI-DSS e SSE Streaming. |
+| **Transaction Ledger Service** | `Java 26` + `Spring Boot 4.0.0-SNAPSHOT` + `Lombok` | `8081` | Core transacional com Virtual Threads (Project Loom), JVM ZGC Generational e Transactional Outbox Pattern. |
+| **Copilot RAG Service** | `Python 3.14` + `FastAPI` + `pgvector` + `Redis` | `8000` | Motor de RAG Híbrido (Vetorial HNSW + BM25), roteador inteligente de LLMs e Cache Semântico. |
+| **POS Diagnostics Service** | `Python 3.14` + `FastAPI` + `Pydantic v2` | `8002` | Telemetria de maquininhas de cartão, análise de códigos de erro ISO 8583 e sincronismo EMV/PINPAD. |
+| **Dispute Agent Worker** | `Python 3.14` + `CrewAI` + `Boto3 SQS` | Worker | Worker assíncrono orientado a eventos para resolução automática de chargebacks via multi-agentes. |
 
 ---
 
-## 🏛️ Arquitetura dos 5 Microsserviços Especializados
+## 3. Diagrama da Arquitetura do Sistema
 
 ```mermaid
-graph TD
-    Client[📱 POS / Lojista / App Web] -->|HTTPS / SSE| EdgeGateway[🌐 1. edge-gateway]
-    
-    subgraph "Camada de Microsserviços de Domínio"
-        EdgeGateway -->|Transações ACID & Ledger| TransactionalCore[☕ 2. transaction-ledger-service]
-        EdgeGateway -->|RAG Financeiro & Streaming| CopilotService[💬 3. copilot-rag-service]
-        EdgeGateway -->|Diagnóstico & Telemetria POS| PosDiagnostics[📟 4. pos-diagnostics-service]
-        
-        TransactionalCore -->|Transactional Outbox| SQS[📬 Amazon SQS Events]
-        SQS -->|Event-Driven Async| DisputeWorker[🤖 5. dispute-agent-worker]
+graph TB
+    subgraph "Cliente & Edge Layer"
+        User[📱 Lojista / Checkout / POS] -->|HTTPS Porta 8080| Ingress[☸️ AWS ALB Ingress Controller]
+        Ingress --> Gateway[🌐 Edge Gateway Fastify 5]
+        Gateway -->|Sanitização PCI-DSS| PII[🛡️ PII Sanitizer]
+        Gateway -->|Autenticação| JWT[🔑 JWT Validator]
     end
-    
-    subgraph "Camada de Dados & Cache Unificada"
-        CopilotService --> Redis[(⚡ Redis 7 Semantic Cache)]
-        TransactionalCore & CopilotService & DisputeWorker --> DB[(🐘 Amazon Aurora PostgreSQL 16 + pgvector HNSW)]
+
+    subgraph "Microsserviços de Aplicação"
+        Gateway -->|/api/v1/transacoes| Core[☕ Transaction Ledger - Java 26 / Spring Boot 4]
+        Gateway -->|/api/v1/copilot / SSE| Copilot[💬 Copilot RAG Service - Python 3.14]
+        Gateway -->|/api/v1/pos| POS[📟 POS Diagnostics - Python 3.14]
+    end
+
+    subgraph "Inteligência Artificial & Agentes"
+        Copilot -->|1. Busca Similaridade| Cache[⚡ Redis Semantic Cache]
+        Copilot -->|2. RAG Híbrido| PGVec[(🐘 Aurora PostgreSQL + pgvector)]
+        Core -->|Outbox Pattern| SQS[📬 Amazon SQS Events Queue]
+        SQS -->|KEDA Autoscaling| DisputeWorker[🤖 Dispute Crew Worker]
+        DisputeWorker --> Ag1[🔍 Extrator de Evidências]
+        DisputeWorker --> Ag2[⚖️ Auditor de Compliance]
+        DisputeWorker --> Ag3[✍️ Redator Jurídico]
     end
 ```
 
-| Microsserviço | Stack | Responsabilidade / Domínio |
-| :--- | :--- | :--- |
-| **🌐 `edge-gateway`** | Node.js 26, Fastify 5, TypeScript | Borda, Rate Limiting, Sanitização PII (PCI-DSS) e Streaming SSE. |
-| **☕ `transaction-ledger-service`** | Java 26, Spring Boot 4, Hibernate | Ledger imutável, autorização, liquidação PIX e Transactional Outbox SQS. |
-| **💬 `copilot-rag-service`** | Python 3.14, FastAPI, pgvector, Redis | RAG Híbrido, Smart Model Router e Semantic Cache (<10ms / R$ 0,00). |
-| **📟 `pos-diagnostics-service`** | Python 3.14, FastAPI | Telemetria de maquininhas, Function Calling e renovação de chaves EMV. |
-| **🤖 `dispute-agent-worker`** | Python 3.14, CrewAI, Boto3 | Multi-Agentes autônomos para auditoria e defesa de chargebacks via SQS. |
+---
+
+## 4. Detalhamento dos 5 Microsserviços
+
+### 🌐 1. Edge Gateway (`services/edge-gateway`)
+* **Localização:** [`services/edge-gateway`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/edge-gateway)
+* **Objetivo:** Atuar como camada perimetral de proteção, rate limiting e proxy reverso de alta performance.
+* **Recursos:**
+  * Mascaramento automático de cartões (`[CARD_FINAL_4444]`), CPFs (`[CPF_PROTEGIDO]`) e CVV (`[REDACTED]`).
+  * Conexões persistentes HTTP com suporte a **Server-Sent Events (SSE)** para streaming de respostas de IA.
+  * Rate Limiting distribuído de 1.000 requisições por minuto.
+
+### ☕ 2. Transaction Ledger Service (`services/transaction-ledger-service`)
+* **Localização:** [`services/transaction-ledger-service`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/transaction-ledger-service)
+* **Objetivo:** Processamento transacional de alta confiabilidade com garantia de ACID e consistência eventual.
+* **Recursos:**
+  * Uso de **Project Lombok** (`@Data`, `@Builder`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Slf4j`, `@RequiredArgsConstructor`).
+  * **Transactional Outbox Pattern**: Grava a transação e o evento na mesma transação atômica do banco, publicando de forma assíncrona no Amazon SQS via scheduler.
+  * Otimizações da JVM Java 26 com **ZGC Generational** e Virtual Threads para suporte a centenas de milhares de conexões concorrentes com pausamento nulo de GC.
+
+### 💬 3. Copilot RAG Service (`services/copilot-rag-service`)
+* **Localização:** [`services/copilot-rag-service`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/copilot-rag-service)
+* **Objetivo:** Assistente inteligente para lojistas tirarem dúvidas sobre extratos, contratos e taxas de antecipação.
+* **Recursos:**
+  * **Busca Híbrida:** Reciprocal Rank Fusion combinando busca densa (vetores de 1536 dimensões via pgvector) e busca esparsa (Full-Text Search em português).
+  * **Cache Semântico Redis:** Calcula a distância de cosseno entre embeddings de perguntas anteriores. Perguntas com similaridade >= 0.92 retornam em menos de 10ms sem consumir tokens de LLM.
+
+### 📟 4. POS Diagnostics Service (`services/pos-diagnostics-service`)
+* **Localização:** [`services/pos-diagnostics-service`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/pos-diagnostics-service)
+* **Objetivo:** Diagnóstico em tempo real de maquininhas de cartão físicas e telemetria de conectividade.
+* **Recursos:**
+  * Resolução de códigos ISO 8583 (ex.: `ERR_58 - Falha de Sincronismo de Chave Criptográfica EMV/PINPAD`).
+  * Padrão Strategy para execução de function calling determinístico e correção de falhas de hardware/software.
+
+### 🤖 5. Dispute Agent Worker (`services/dispute-agent-worker`)
+* **Localização:** [`services/dispute-agent-worker`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/services/dispute-agent-worker)
+* **Objetivo:** Orquestração autônoma de chargebacks e fraudes financeiras.
+* **Recursos:**
+  * Orquestração de 3 agentes especializados em **CrewAI**:
+    1. **Evidence Extractor Agent:** Coleta logs de geolocalização, IP e hash de chip EMV.
+    2. **Compliance Auditor Agent:** Valida os prazos e regras das bandeiras (Visa Core Rules / Mastercard Chargeback Guide).
+    3. **Legal Defense Agent:** Redige petição e defesa técnica e financeira estruturada.
 
 ---
 
-## ☸️ Orquestração de Contêineres no Amazon EKS (Kubernetes)
+## 5. Camada de Inteligência Artificial & Multi-Agentes
 
-O ecossistema conta com manifestos declarativos **Kustomize / Kubernetes (EKS v1.31)** para orquestração de produção com alta resiliência e auto-scaling:
+```text
+                               ┌────────────────────────┐
+                               │     Pergunta Lojista   │
+                               └───────────┬────────────┘
+                                           │
+                                ┌──────────▼──────────┐
+                                │   Embedding Vector  │
+                                └──────────┬──────────┘
+                                           │
+                           ┌───────────────┴───────────────┐
+                           ▼                               ▼
+                 [ Similaridade >= 0.92? ]       [ Busca Híbrida ]
+                 ┌─────────┴─────────┐           ┌─────────┴─────────┐
+                 │  SIM (Cache Hit)  │           │   NÃO (Cache Miss)│
+                 ├───────────────────┤           ├───────────────────┤
+                 │ Redis Semantic    │           │ pgvector (HNSW)   │
+                 │ Latência: ~10ms   │           │ + FTS BM25 Lexical│
+                 │ Custo: R$ 0,00    │           │ + Bedrock/OpenAI  │
+                 └───────────────────┘           └───────────────────┘
+```
+
+---
+
+## 6. Engenharia de Dados & Persistência
+
+* **Banco de Dados Relacional:** PostgreSQL 16 com extensão **pgvector**.
+* **Índices Vetoriais:** Indexação vetorial com **HNSW (Hierarchical Navigable Small World)** operando com distância de cosseno (`vector_cosine_ops` com `m=16, ef_construction=64`).
+* **Particionamento de Tabelas:** A tabela `transacoes` é particionada nativamente por **RANGE de Data (`PARTITION BY RANGE (criado_em)`)**, garantindo escalabilidade para bilhões de registros com descarte de partições antigas em milissegundos.
+* **Auditoria PCI-DSS:** Tabela `audit_logs` imutável com logs de acesso e operações de cartões.
+
+---
+
+## 7. Orquestração no Kubernetes (Amazon EKS) & KEDA
+
+Os manifestos de infraestrutura estão organizados via **Kustomize** no diretório [`k8s/`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/k8s):
 
 ```text
 k8s/
-├── kustomization.yaml                  # Orquestrador Kustomize
+├── kustomization.yaml                  # Orquestrador declarativo
 ├── base/
-│   ├── namespace.yaml                  # Namespace 'nexuspay' isolado
-│   ├── configmap.yaml                  # Variáveis globais de ambiente
+│   ├── namespace.yaml                  # Namespace 'nexuspay'
+│   ├── configmap.yaml                  # Configurações globais
 │   └── secrets.yaml                    # Segredos e chaves de API protegidas
 └── services/
     ├── 01-edge-gateway.yaml            # Deployment (2-10 réplicas), HPA e Ingress AWS ALB
-    ├── 02-transaction-ledger-service.yaml # Deployment (2-8 réplicas), JVM ZGC Generational e HPA
+    ├── 02-transaction-ledger-service.yaml # Deployment (2-8 réplicas), ZGC e HPA
     ├── 03-copilot-rag-service.yaml     # Deployment (2-8 réplicas) com HPA
     ├── 04-pos-diagnostics-service.yaml # Deployment (2-6 réplicas) com HPA
-    └── 05-dispute-agent-worker.yaml    # Deployment com KEDA ScaledObject (Auto-scaling por fila SQS)
+    └── 05-dispute-agent-worker.yaml    # Deployment com KEDA ScaledObject (Auto-scaling por SQS)
 ```
 
-### 🚀 Highlights de Kubernetes no NexusPay:
-1. **AWS ALB Ingress Controller:** Roteamento com terminação TLS e baixa latência.
-2. **Horizontal Pod Autoscaling (HPA):** Escalabilidade automática baseada em consumo de CPU e Memória.
-3. **KEDA (Kubernetes Event-driven Autoscaling):** O worker de chargebacks escala de 1 até 10 pods dinamicamente de acordo com o volume de eventos na fila SQS.
-4. **Infraestrutura via Terraform (`terraform/eks.tf`):** Provisionamento de Cluster EKS com Node Groups EC2 Spot para manter conformidade rigorosa de FinOps.
+### ⚡ Event-Driven Autoscaling com KEDA:
+O worker de chargebacks escala automaticamente a quantidade de pods (de 1 até 10) de acordo com o tamanho da fila **Amazon SQS**, economizando 100% de custos computacionais quando não há contestações pendentes.
 
 ---
 
-## 📂 Estrutura do Monorepo
+## 8. FinOps & AWS Free Tier Guardrail ($1.00 Budget)
+
+Para viabilizar portfólio profissional com **custo zero**:
+
+1. **AWS Budgets Guardrail ([`terraform/budgets.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/budgets.tf)):** Trava automática com alerta de limite estrito de **US$ 1.00 / mês**.
+2. **Ambiente Local 100% Mockado:** Suporte integrado ao **LocalStack**, emulando SQS, S3 e SecretsManager localmente.
+3. **Modo Mock LLM:** Todos os microsserviços de IA contam com fallback determinístico local via variável `USE_MOCK_LLM=true`.
+4. **EC2 Spot Instances:** Definição no Terraform de NodeGroups Spot no EKS para economia de até 90% em computação.
+
+---
+
+## 9. Esteira DevSecOps & Automated Releases no GitHub Actions
+
+O arquivo [`.github/workflows/ci.yml`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/.github/workflows/ci.yml) implementa um pipeline completo de 5 estágios:
+
+```mermaid
+graph LR
+    S1[1. Compilação Paralela] --> S2[2. Testes & Coverage Gate]
+    S2 --> S3[3. Segurança & SAST Gate]
+    S3 --> S4[4. Docker Matrix Builds]
+    S4 --> S5[5. Automated Release]
+```
+
+### 🛡️ Quality & Security Gates:
+* **Cobertura de Código:** Relatórios automáticos no Jest (`coverage/`), Surefire e Pytest (`pytest-cov`).
+* **SAST & Compliance:** Análise estática com **Semgrep** (regras OWASP Top 10 e PCI-DSS) e **Trivy** (scanner de vulnerabilidades de dependências).
+* **Validação de Infraestrutura:** Validação de sintaxe dos manifestos **Kubernetes EKS** e **Terraform Validate**.
+* **Releases Automáticas:** Geração automática de release semântica com changelog estruturado e tags de versão (`v1.0.YYYYMMDDHHMM`).
+
+---
+
+## 10. Guia de Execução Local & Testes
+
+### Pré-requisitos:
+* **Docker & Docker Compose**
+* **Node.js 26** & **Yarn**
+* **Java 26** & **Maven Wrapper** (incluso no projeto)
+* **Python 3.14** & **uv**
+
+### 1. Subir toda a infraestrutura com Docker Compose:
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+### 2. Executar a Validação Local Completa (Script Pre-Push):
+```bash
+./scripts/validate-local.sh
+```
 
 ```text
-nexuspay-ai-engine/
-├── .github/workflows/
-│   ├── ci.yml                          # Matriz CI dos 5 microsserviços + Validação K8s Kustomize
-│   └── terraform-validate.yml          # Validação de IaC e FinOps Guardrails
-├── k8s/                                # Manifestos Kubernetes Kustomize (Amazon EKS)
-│   ├── base/                           # Namespace, ConfigMaps e Secrets
-│   └── services/                       # Deployments, Services, HPAs, KEDA e Ingress
-├── docker/
-│   ├── docker-compose.yml              # Sobe os 5 microsserviços + PostgreSQL (pgvector) + Redis + LocalStack
-│   └── init-db/
-│       ├── 01-schema.sql               # DDL pgvector HNSW + Partições + Outbox
-│       └── 02-seed.sql                 # Dados iniciais
-├── terraform/
-│   ├── main.tf                         # Configuração AWS & LocalStack
-│   ├── eks.tf                          # Cluster Amazon EKS & Spot Node Groups
-│   ├── budgets.tf                      # FinOps Guardrail ($1.00 Budget Limit)
-│   └── sqs.tf                          # Filas SQS & DLQ
-│
-└── services/
-    ├── edge-gateway/                   # [Node.js 26 / Fastify 5]
-    ├── transaction-ledger-service/     # [Java 26 / Spring Boot 4 / Lombok]
-    ├── copilot-rag-service/            # [Python 3.14 / FastAPI / pgvector]
-    ├── pos-diagnostics-service/        # [Python 3.14 / FastAPI / IoT]
-    └── dispute-agent-worker/           # [Python 3.14 / CrewAI / SQS Worker]
+================================================================
+🚀 Validação Local do NexusPay AI Engine
+================================================================
+✔ 1/6: Edge Gateway (Node.js 26 / Jest)                       -> 7 passed (100%)
+✔ 2/6: Transaction Ledger Service (Java 26 / Spring Boot 4)   -> 2 passed (100%)
+✔ 3/6: Copilot RAG Service (Python 3.14 / FastAPI)            -> 10 passed (100%)
+✔ 4/6: POS Diagnostics Service (Python 3.14 / FastAPI)        -> 8 passed (100%)
+✔ 5/6: Dispute Agent Worker (Python 3.14 / CrewAI)             -> 10 passed (100%)
+✔ 6/6: Kubernetes Manifests & Kustomize (Amazon EKS)          -> Validado com Sucesso!
+================================================================
+🎉 SUCESSO: Todos os microsserviços e esteiras validados!
+================================================================
 ```
 
 ---
 
-## 🚀 Quick Start em 1 Comando
+## 11. Referência de APIs REST & SSE
 
-O projeto inclui suporte completo a **Docker Compose** e **LocalStack**, permitindo rodar e testar todo o ecossistema localmente **sem necessidade de conta AWS real ou custos de nuvem**.
+### 🌐 Edge Gateway (`http://localhost:8080`)
+* `GET /health` - Health Check do Gateway
+* `POST /api/v1/transacoes` - Roteia criação de transação para o Transaction Ledger
+* `POST /api/v1/copilot/chat` - Roteia chat síncrono para o Copilot RAG
+* `GET /api/v1/copilot/stream?prompt=...` - Rota de streaming token-por-token via Server-Sent Events (SSE)
+* `POST /api/v1/pos/diagnose` - Roteia diagnóstico de POS
 
-### Pré-requisitos
-* [Docker](https://www.docker.com/) e Docker Compose instalados
-* Git
+### ☕ Transaction Ledger (`http://localhost:8081`)
+* `POST /transacoes` - Cria e autoriza nova transação financeira
+* `GET /actuator/health` - Health Check do Spring Boot com liveness e readiness probes
 
-### 1. Clonar e Inicializar o Ambiente
-```bash
-# Clone o repositório
-git clone https://github.com/MarcelDevBr/nexuspay-ai-engine.git
-cd nexuspay-ai-engine
+### 💬 Copilot RAG (`http://localhost:8000`)
+* `GET /health` - Health Check do serviço Python
+* `POST /api/v1/copilot/query` - Consulta RAG com busca híbrida e cache semântico
 
-# Suba todos os serviços (Gateway, Java Core, AI Core, PostgreSQL com pgvector, Redis e LocalStack)
-docker compose -f docker/docker-compose.yml up --build -d
-```
-
-### 2. Verificar a Saúde dos Serviços
-```bash
-# Gateway Node.js
-curl -i http://localhost:8080/health
-
-# Java 21 Transactional Core
-curl -i http://localhost:8081/actuator/health
-
-# Python 3.13 GenAI Engine
-curl -i http://localhost:8000/health
-```
-
-### 3. Exemplos de Execução Rápida
-
-#### A. Consulta ao Copilot Financeiro via Streaming (RAG + Semantic Cache)
-```bash
-curl -N -X POST http://localhost:8080/api/v1/chat/stream \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer mock-jwt-token" \
-  -d '{
-    "lojista_id": "lojista_123",
-    "prompt": "Por que minha taxa de antecipação foi R$ 45,00 ontem?"
-  }'
-```
-
-#### B. Autorização de Transação Financeira (Core Java ACID + Outbox)
-```bash
-curl -X POST http://localhost:8080/api/v1/transacoes \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer mock-jwt-token" \
-  -d '{
-    "lojista_id": "lojista_123",
-    "terminal_id": "POS_789456",
-    "valor": 150.00,
-    "tipo": "CREDITO_A_VISTA"
-  }'
-```
+### 📟 POS Diagnostics (`http://localhost:8002`)
+* `GET /health` - Health Check do serviço de diagnóstico
+* `POST /api/v1/pos/diagnose` - Processa payload de telemetria ISO 8583 e gera plano de ação
 
 ---
 
-## 📂 Estrutura do Repositório
+<div align="center">
 
-```text
-nexuspay-ai-engine/
-├── .github/workflows/          # CI/CD: Pipeline de testes paralelos (Maven, Pytest, Jest)
-├── docker/                     # Dockerfile multi-stage de cada serviço e docker-compose.yml
-├── docs/                       # Documentação aprofundada de arquitetura, DDL e decisões
-│   └── projeto_unificado_nexuspay_genai.md
-├── k8s/                        # Manifests Kubernetes (Deployments, HPA, ConfigMaps)
-│
-├── gateway/                    # [Node.js 22 / TypeScript / Fastify]
-│   └── src/                    # Edge Router, Rate Limiter, PII Masking, SSE Stream
-│
-├── transactional_core/         # [Java 21 / Spring Boot 4]
-│   └── src/main/java/          # Clean Architecture: Domain Entities, Outbox Publisher, SQS
-│
-└── ai_core/                    # [Python 3.13 / FastAPI]
-    └── src/                    # RAG Híbrido, pgvector, Redis Cache, CrewAI Disputas
-```
+Desenvolvido com foco em **Alta Resiliência**, **Segurança PCI-DSS**, **Clean Code** e **FinOps**.
 
----
-
-## 🛡️ Segurança, Governança e Compliance
-
-* **LGPD & PCI-DSS:** Sanitização em tempo real na camada de borda com mascaramento de PAN/CVV e hash criptográfico de documentos (`cnpj_hash`).
-* **Zero Hardcoded Secrets:** Integração com AWS Secrets Manager e *IAM Roles for Service Accounts (IRSA)*.
-* **Auditabilidade Imutável:** Todas as ações executadas pelos Agentes Autônomos são registradas em logs com rastreabilidade criptográfica via S3 e KMS.
-* **Observabilidade Distribuída:** Tracing ponta a ponta com OpenTelemetry, correlacionando requisições que transitam por Node.js, Java e Python.
-
----
-
-## 📚 Documentação Aprofundada
-
-Para consultar o DDL SQL completo do `pgvector`, benchmarks detalhados de latência, diagramas de sequência de eventos e guia completo de perguntas técnicas de arquitetura, acesse:
-
-👉 **[Documentação de Arquitetura e Engenharia Detalhada](docs/projeto_unificado_nexuspay_genai.md)**
-
----
-
-## 👨‍💻 Autor
-
-Desenvolvido por **Marcel da Silva Almeida**  
-* [GitHub (@MarcelDevBr)](https://github.com/MarcelDevBr) • [LinkedIn](https://www.linkedin.com/in/marcel-almeida-dev/)
-
----
-
-## 📄 Licença
-
-Este projeto está licenciado sob a licença [MIT](LICENSE).
+</div>
