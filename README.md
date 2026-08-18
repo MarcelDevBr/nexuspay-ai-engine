@@ -163,39 +163,49 @@ A infraestrutura de nuvem do NexusPay AI Engine foi projetada para operar no mod
 * **Papel no Sistema:** Ponto de terminação TLS e roteamento L7 de todo o tráfego HTTP/HTTPS externo direcionado ao Edge Gateway.
 * **Segurança:** Suporte a regras de WAF, proteção contra injeção e isolamento do perímetro interno do cluster.
 
-#### 4. 🚀 Amazon MSK Serverless (Managed Streaming for Apache Kafka):
+#### 4. 🐘 Amazon RDS PostgreSQL 16 (com pgvector & Particionamento Nativo):
+* **Arquivo IaC:** [`terraform/rds.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/rds.tf)
+* **Papel no Sistema:** Banco de dados relacional e vetorial unificado (`aws_db_instance.nexuspay_postgres`) operando com a extensão nativa `pgvector` para busca semântica em grafos vetoriais HNSW e particionamento de transações por range de data.
+* **Segurança & FinOps:** Configurado com instância elegível ao Free Tier (`db.t4g.micro`), isolamento em Subnet Group privada e Security Group restrito ao cluster EKS.
+
+#### 5. ⚡ Amazon ElastiCache for Redis 7 (Cache Semântico & Rate Limiting):
+* **Arquivo IaC:** [`terraform/elasticache.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/elasticache.tf)
+* **Papel no Sistema:** Cluster em memória (`aws_elasticache_cluster.nexuspay_redis`) operando como Cache Semântico de embeddings (reduzindo custo de IA para zero e latência para 10ms em cache hits) e controle de Rate Limiting perimetral.
+* **FinOps:** Instância `cache.t4g.micro` em subnet privada com proteção de acesso por Security Group.
+
+#### 6. 🚀 Amazon MSK Serverless (Managed Streaming for Apache Kafka):
 * **Arquivo IaC:** [`terraform/msk.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/msk.tf)
 * **Papel no Sistema:** Cluster Kafka totalmente gerenciado e sem servidor para streaming de eventos transacionais em tempo real (`nexuspay.transacoes.events`).
 * **Segurança & FinOps:** Autenticação SASL/IAM (`aws_msk_serverless_cluster`), provisionamento sob demanda sem cobrança por instâncias ociosas e isolamento por Security Group nas portas 9092-9098.
 
-#### 5. 📬 Amazon SQS (Simple Queue Service) & Dead Letter Queue (DLQ):
+#### 7. 📬 Amazon SQS (Simple Queue Service) & Dead Letter Queue (DLQ):
 * **Arquivo IaC:** [`terraform/sqs.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/sqs.tf)
 * **Papel no Sistema:** Fila principal (`transacoes-events`) para consumo assíncrono desacoplado de transações que requerem auditoria de fraude ou disputa.
 * **Resiliência:** Redrive Policy configurada com `maxReceiveCount = 5`. Mensagens que falham após 5 tentativas são enviadas para a Dead Letter Queue (`nexuspay-transacoes-events-dlq`) com retenção de até 14 dias para análise forense.
 
-#### 6. 🪣 Amazon S3 (Simple Storage Service) & Glacier Lifecycle:
+#### 8. 🪣 Amazon S3 (Simple Storage Service) & Glacier Lifecycle:
 * **Arquivo IaC:** [`terraform/s3.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/s3.tf)
 * **Papel no Sistema:** Cofre de armazenamento para petições jurídicas de contestação, logs de auditoria imutáveis, recibos fiscais e base de conhecimento documental para o RAG.
 * **Segurança:** Criptografia Server-Side ativa por padrão (`AES256`) e versionamento de objetos habilitado (`versioning_configuration`).
 * **Ciclo de Vida BACEN & FinOps:** Regra de ciclo de vida (`aws_s3_bucket_lifecycle_configuration`) que transiciona objetos para **Amazon S3 Glacier** após 90 dias e define expiração definitiva após 1825 dias (5 anos), atendendo rigorosamente à regulamentação do Banco Central com custo de armazenamento insignificante.
 
-#### 7. 🎯 AWS Budgets (FinOps Zero-Cost Guardrail):
+#### 9. 🎯 AWS Budgets (FinOps Zero-Cost Guardrail):
 * **Arquivo IaC:** [`terraform/budgets.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/budgets.tf)
 * **Papel no Sistema:** Trava orçamentária automatizada que monitora os custos da conta AWS em tempo real.
 * **Alertas:** Disparo imediato de e-mail ao atingir 80% ($0.80) do limite real e 100% ($1.00) do limite previsto mensal, garantindo que o projeto opere estritamente dentro do Free Tier / Custo Zero.
 
-#### 8. 🔑 AWS IAM (Identity and Access Management) & IRSA:
+#### 10. 🔑 AWS IAM (Identity and Access Management) & IRSA:
 * **Arquivo IaC:** [`terraform/eks.tf`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform/eks.tf)
 * **Papel no Sistema:** Gerenciamento granular de permissões através de papéis dedicados (`nexuspay-eks-cluster-role` e `nexuspay-eks-node-role`), aplicando o princípio de menor privilégio (Least Privilege) sem compartilhamento de credenciais estáticas.
 
-#### 9. 🔒 AWS Secrets Manager & Parameter Store:
+#### 11. 🔒 AWS Secrets Manager & Parameter Store:
 * **Papel no Sistema:** Armazenamento seguro de segredos de banco de dados, chaves criptográficas de POS e credenciais de APIs externas, injetados diretamente nos contêineres via Kubernetes Secrets.
 
-#### 10. 🤖 Amazon Bedrock (com Fallback Mock FinOps):
+#### 12. 🤖 Amazon Bedrock (com Fallback Mock FinOps):
 * **Papel no Sistema:** Provedor de modelos de linguagem de ponta (Claude 3.5 Sonnet / Titan Embeddings) para geração de texto e representação vetorial.
 * **Modo Custo Zero:** Suporte total a fallback local determinístico via variável `USE_MOCK_LLM=true`, permitindo testes ilimitados e esteira de CI sem cobrança de tokens.
 
-#### 11. 💻 LocalStack (AWS Cloud Emulator):
+#### 13. 💻 LocalStack (AWS Cloud Emulator):
 * **Arquivo Docker:** [`docker/docker-compose.yml`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/docker/docker-compose.yml)
 * **Papel no Sistema:** Emulador local 100% gratuito dos serviços AWS SQS, S3 e Secrets Manager na porta 4566, permitindo desenvolvimento e testes de integração idênticos aos da nuvem real sem necessidade de conexão com a AWS.
 
