@@ -118,6 +118,12 @@
             <artifactId>sqs</artifactId>
         </dependency>
 
+        <!-- Apache Kafka Client & Spring Kafka -->
+        <dependency>
+            <groupId>org.springframework.kafka</groupId>
+            <artifactId>spring-kafka</artifactId>
+        </dependency>
+
         <!-- Project Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
