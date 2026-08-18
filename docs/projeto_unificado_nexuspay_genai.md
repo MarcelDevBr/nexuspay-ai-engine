@@ -39,7 +39,7 @@ A escolha de uma arquitetura poliglota (**Node.js + Java + Python**) não é arb
 
 ### 📊 Tabela Comparativa de Justificativas e Trade-offs
 
-| Camada / Tecnologia | Papel no Ecossistema `NexusPay` | **Por Que Escolhemos Esta Tecnologia? (O Porquê Técnico)** | **Por Que NÃO Outra Tecnologia? (Trade-offs)** |
+| Camada / Tecnologia | Papel no Ecossistema `NexusPay` | **Motivação Técnica da Escolha** | **Trade-offs e Alternativas Descartadas** |
 | :--- | :--- | :--- | :--- |
 | **🌐 Edge Gateway (Node.js / TypeScript / Fastify)** | Proxy reverso na borda, Rate Limiting, autenticação JWT, mascaramento de PII e Streaming SSE. | **Event-loop não bloqueante e I/O ultra-eficiente:** Ideal para manter dezenas de milhares de conexões HTTP/SSE/WebSocket abertas simultaneamente com baixo consumo de memória. O Fastify oferece serialização via Ajv e até 4x mais throughput que o Express. | *Por que não Java ou Python aqui?* Java consome mais memória por conexão ociosa em edge; Python (WSGI/ASGI tradicional) tem throughput de I/O bruto inferior para proxies puros. |
 | **☕ Core Transacional (Java 21 / Spring Boot 4)** | Autorização de transações, contabilidade (*Ledger* imutável), liquidação PIX, *Pessimistic Locking* e *Transactional Outbox*. | **Solidez, consistência ACID e tipagem estática robusta:** Ecossistema comprovado para processamento financeiro crítico com *Virtual Threads* (Project Loom) no Java 21, garantindo escalabilidade sem reatividade complexa. Spring Data JPA e Spring Cloud AWS maduros. | *Por que não Python ou Node aqui?* Python não possui o mesmo isolamento de threads e ecossistema de transações distribuídas ACID enterprise; Node.js carece de bibliotecas maduras para gerenciamento de transações financeiras pesadas com locks de banco avançados. |
@@ -50,6 +50,7 @@ A escolha de uma arquitetura poliglota (**Node.js + Java + Python**) não é arb
 | **🤖 AWS Bedrock (Claude 3.5 Sonnet / Llama 3)** | Inferência gerenciada de LLMs corporativos e geração de embeddings (Titan Embeddings v2). | **Soberania e privacidade de dados (Enterprise Compliance):** Modelos rodam dentro da VPC da AWS sem retenção nem treinamento com dados de clientes, em conformidade com LGPD e normas do Banco Central do Brasil (BACEN). | *Por que não chamar a API pública da OpenAI direta?* Enviar dados de lojistas para APIs públicas de terceiros viola políticas de segurança bancária e normas de privacidade PCI-DSS da Stone. |
 | **🛡️ AWS IAM (IRSA) & Secrets Manager** | Gestão de identidade e permissões de acesso a recursos da nuvem. | **Segurança sem credenciais estáticas (Zero-Hardcoded Secrets):** Uso de *IAM Roles for Service Accounts (IRSA)* no Kubernetes/ECS, garantindo credenciais temporárias de curto prazo e rotação automática. | *Por que não variáveis de ambiente com access keys?* Chaves estáticas em variáveis de ambiente representam um dos maiores vetores de vazamento de segurança em ambientes corporativos. |
 | **📦 Amazon S3 + KMS** | Armazenamento seguro de comprovantes de transação, manuais técnicos e logs de auditoria. | **Durabilidade de 11 noves (99.999999999%) e criptografia em repouso:** Armazena documentos não estruturados com criptografia gerenciada por chave KMS exclusiva do cliente. | *Por que não salvar binários diretamente no PostgreSQL?* Gravar arquivos binários/PDFs no banco relacional incha o storage, degrada a memória de buffer pool e afeta a performance de queries SQL. |
+| **☸️ Amazon EKS + KEDA (Contêineres vs Serverless)** | Orquestração de todos os microsserviços e autoscaling elástico baseado em eventos. | **Latência previsível, streaming SSE e suporte a fluxos multi-agente longos:** Garante pods aquecidos para o core Java (zero cold starts), conexões TCP abertas e streaming token a token no Gateway, além de permitir tarefas longas de agentes CrewAI. O KEDA escala de 1 a 10 réplicas sob demanda por profundidade de fila SQS e lag do Kafka. | *Por que NÃO AWS Lambda?* O cold start na JVM degradaria o SLA de POS (<50ms); o Lambda impõe limites de timeout e buffers para SSE; e workflows de múltiplos agentes em IA excedem o modelo efêmero e encarecem por tempo de execução contínua. |
 | **🐳 Docker + LocalStack** | Ambiente de desenvolvimento local e esteira de testes automatizados. | **Paridade total de ambiente sem custo de nuvem:** Simula SQS, S3, RDS e Bedrock localmente no `docker-compose`, permitindo rodar testes de integração e CI/CD completos sem gastar orçamento de cloud. | *Por que não depender de uma conta AWS real para testes de desenvolvimento?* Custo desnecessário, latência de rede em testes automatizados e risco de poluição de dados em ambientes compartilhados. |
 
 ---
@@ -165,7 +166,7 @@ sequenceDiagram
 
 Tanto o serviço Java quanto o serviço Python são estruturados rigorosamente sob a Clean Architecture:
 
-- **Por que usamos?** O *Domínio* (regras de cálculo financeiro, validações de transação e lógica de auditoria) é 100% puro e independente de detalhes externos. Se a Stone migrar do PostgreSQL para o DynamoDB, do SQS para o Kafka ou da AWS Bedrock para o Azure OpenAI, **nenhuma linha do código de negócio precisa ser alterada**.
+- **Motivação Arquitetural:** O *Domínio* (regras de cálculo financeiro, validações de transação e lógica de auditoria) é 100% puro e independente de detalhes externos. Se houver migração do PostgreSQL para o DynamoDB, do SQS para o Kafka ou da AWS Bedrock para o Azure OpenAI, **nenhuma linha do código de negócio precisa ser alterada**.
 
 ```text
 ┌────────────────────────────────────────────────────────┐
@@ -506,14 +507,14 @@ graph LR
 
 ---
 
-### ❓ Pergunta 3: *"Como você garante a segurança de dados bancários (PCI-DSS e LGPD) ao enviar prompts para modelos de IA?"*
+### ❓ Pergunta 3: *"Como é garantida a segurança de dados bancários (PCI-DSS e LGPD) ao enviar prompts para modelos de IA?"*
 >
-> **Sua Resposta:**  
-> *"Implementamos uma arquitetura de defesa em três camadas: Primeiro, na borda (Edge Gateway no Node.js), um middleware de sanitização inspeciona o payload com expressões regulares e validações determinísticas para mascarar números de cartão (PAN), CVV, CPFs e dados pessoais antes que eles entrem no ecossistema. Segundo, todas as chamadas de inferência são direcionadas para a AWS Bedrock dentro da nossa VPC privada, onde contratos corporativos garantem que nenhum dado de cliente é retido ou utilizado para retreinar modelos. Terceiro, o acesso aos serviços é protegido por IAM Roles de curto prazo (IRSA) no Kubernetes/ECS, eliminando qualquer credencial ou chave de API estática no código-fonte."*
+> **Resposta Técnica:**  
+> *"A arquitetura adota defesa em três camadas: Primeiro, na borda (Edge Gateway em Node.js), um middleware de sanitização inspeciona o payload com expressões regulares e validações determinísticas para mascarar números de cartão (PAN), CVV, CPFs e dados pessoais antes da entrada no ecossistema. Segundo, todas as chamadas de inferência são direcionadas para o Amazon Bedrock dentro de VPC privada, com garantias contratuais de que nenhum dado de cliente é retido ou utilizado para retreinar modelos. Terceiro, o acesso aos serviços é protegido por IAM Roles de curto prazo (IRSA) no Kubernetes EKS, eliminando qualquer credencial ou chave de API estática no código-fonte."*
 
 ---
 
-### ❓ Pergunta 4: *"Como você lida com alucinações da LLM em relatórios e extratos financeiros?"*
+### ❓ Pergunta 4: *"Como a plataforma lida com alucinações da LLM em relatórios e extratos financeiros?"*
 >
-> **Sua Resposta:**  
-> *"Em finanças, alucinação é inaceitável. Para eliminar esse risco, adotamos três estratégias: Primeiro, o RAG Híbrido injeta os dados reais do extrato diretamente no contexto do prompt, com instrução estrita de 'Grounding' (o modelo só tem permissão para responder com base nos dados fornecidos). Segundo, utilizamos 'Structured Outputs' com esquemas Pydantic v2 rigorosos, forçando o modelo a responder em JSON validado com tipos estritos. Terceiro, nos agentes autônomos do CrewAI, criamos um Agente Auditor independente que re-valida todas as somas e cálculos matemáticos antes que o parecer final seja apresentado ao lojista."*
+> **Resposta Técnica:**  
+> *"Em finanças, alucinação é inaceitável. Para eliminar esse risco, foram estabelecidas três estratégias: Primeiro, o RAG Híbrido injeta os dados reais do extrato diretamente no contexto do prompt, com instrução estrita de 'Grounding' (o modelo só tem permissão para responder com base nos dados fornecidos). Segundo, adota-se 'Structured Outputs' com esquemas Pydantic v2 rigorosos, forçando o modelo a responder em JSON validado com tipos estritos. Terceiro, nos agentes autônomos do CrewAI, há um Agente Auditor independente que revalida todas as somas e cálculos matemáticos antes que o parecer final seja apresentado ao lojista."*

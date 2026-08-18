@@ -7,6 +7,7 @@ Este documento detalha os padrões arquiteturais, princípios de Clean Architect
 ## 🏛️ 1. Princípios Fundamentais de Engenharia
 
 O NexusPay foi projetado com base em quatro pilares inegociáveis:
+
 1. **SOLID & Clean Architecture:** Cada microsserviço isola regras de domínio de frameworks e adaptadores de infraestrutura (Ports & Adapters / Hexagonal Architecture).
 2. **FinOps & Zero-Cost Cloud:** Infraestrutura planejada para validações locais em **LocalStack** e modelos LLM mockados, com travas de orçamento no AWS Budgets ($1.00 USD).
 3. **Segurança & Conformidade PCI-DSS / BACEN:** Sanitização perimetral de dados de titulares de cartão (PAN, CVV, CPF) antes de logs ou persistência, além de retenção fiscal de 5 anos via Amazon S3 Glacier.
@@ -49,7 +50,7 @@ O NexusPay foi projetado com base em quatro pilares inegociáveis:
 
 Toda a infraestrutura AWS do projeto é provisionada de forma declarativa via **Terraform** ([`terraform/`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/terraform)) e orquestrada no Kubernetes ([`k8s/`](file:///home/marcel/Desenvolvimento/Projetos/nexuspay-ai-engine/k8s)).
 
-### 🗺️ Matriz de Serviços AWS:
+### 🗺️ Matriz de Serviços AWS
 
 | Serviço AWS | Configuração & Recurso IaC | Finalidade no NexusPay |
 | :--- | :--- | :--- |
@@ -70,22 +71,28 @@ Toda a infraestrutura AWS do projeto é provisionada de forma declarativa via **
 ---
 
 ## 🔄 4. Padrões de Projeto e Event Streaming
- 
+
 ### A. Apache Kafka / Amazon MSK Event Streaming (`services/transaction-ledger-service` & `dispute-agent-worker`)
+
 Para garantir alta taxa de transferência (dezenas de milhares de eventos por segundo) e desacoplamento com garantia de ordenação por chave (`lojista_id`):
+
 1. O `KafkaTransactionProducer` publica eventos no tópico `nexuspay.transacoes.events`.
 2. As partições do Kafka distribuem a carga de acordo com o hash da chave do lojista, garantindo que eventos do mesmo lojista sejam processados na ordem exata de emissão.
 3. O `KafkaEventConsumer` do worker de disputas consome o stream com Consumer Group balanceado (`nexuspay-dispute-worker-group`). Transações com suspeita de fraude ou valor elevado disparam automaticamente a esteira autônoma de defesa da CrewAI.
 4. No Kubernetes, o **KEDA Kafka ScaledObject** monitora o lag de mensagens nas partições do tópico e escala os pods horizontalmente de forma reativa.
 
 ### B. Transactional Outbox Pattern (`services/transaction-ledger-service`)
-Ao autorizar uma transação financeira, o sistema precisa notificar outros serviços via **Apache Kafka** e **Amazon SQS**. Para evitar estados inconsistentes (transação gravada no banco mas mensagem falha ao ser enviada), utilizamos o Transactional Outbox:
+
+Ao autorizar uma transação financeira, o sistema precisa notificar outros serviços via **Apache Kafka** e **Amazon SQS**. Para evitar estados inconsistentes (transação gravada no banco mas mensagem falha ao ser enviada), aplica-se o padrão Transactional Outbox:
+
 1. O `TransacaoService` grava a entidade `Transacao` e o `OutboxEvent` na mesma transação atômica do PostgreSQL.
 2. O componente agendador `OutboxPublisherScheduler` faz a leitura dos eventos com status `PENDENTE` e os publica de forma confiável no Apache Kafka e Amazon SQS.
 3. Após a confirmação de recebimento, o status é alterado para `PROCESSADO`.
 
 ### C. Strategy Pattern para Diagnóstico de POS (`services/pos-diagnostics-service`)
+
 O motor de diagnóstico utiliza a interface `IDiagnosticStrategy`:
+
 - `CryptoKeyDiagnosticHandler`: Ativado para falhas criptográficas EMV (ex.: `ERR_58`).
 - `EmvChipDiagnosticHandler`: Ativado para erros de leitura física de chip.
 - `ConnectivityDiagnosticHandler`: Ativado para perdas de sinal GPRS/Wi-Fi.
@@ -93,7 +100,9 @@ O motor de diagnóstico utiliza a interface `IDiagnosticStrategy`:
 Novos diagnósticos podem ser adicionados sem alterar o código existente (**Open/Closed Principle**).
 
 ### D. Multi-Agent Orchestration (`services/dispute-agent-worker`)
+
 Utiliza o framework **CrewAI** com tarefas e papéis segregados:
+
 - **Agente 1 (Extrator de Evidências):** Filtra metadados técnicos de telemetria e valida autenticidade de chip EMV.
 - **Agente 2 (Auditor de Compliance):** Compara prazos e regulamentos de bandeiras de cartão (Visa, Mastercard, Elo).
 - **Agente 3 (Redator Jurídico):** Constrói a contestação fundamentada com base nos relatórios dos agentes anteriores.
@@ -103,17 +112,22 @@ Utiliza o framework **CrewAI** com tarefas e papéis segregados:
 ## 🐘 5. Estratégia de Dados e Indexação Vetorial
 
 ### A. Índices HNSW no pgvector
+
 Para o assistente de RAG, os documentos de regras e manuais são indexados usando o algoritmo **HNSW (Hierarchical Navigable Small World)**:
+
 ```sql
 CREATE INDEX idx_documentos_embedding_hnsw 
 ON documentos_conhecimento 
 USING hnsw (embedding vector_cosine_ops)
 WITH (m = 16, ef_construction = 64);
 ```
+
 O HNSW oferece busca com complexidade $O(\log N)$, proporcionando recuperação vetorial em menos de 5ms mesmo com milhões de vetores.
 
 ### B. Particionamento Nativo de Tabelas
+
 A tabela `transacoes` é particionada por data para permitir alta taxa de ingestão e manutenção eficiente:
+
 ```sql
 CREATE TABLE transacoes (
     id UUID NOT NULL,
@@ -137,3 +151,28 @@ CREATE TABLE transacoes (
 3. **Auditoria Contínua & SAST:**
    - Pipelines automatizados com **Semgrep** (OWASP Top 10 / PCI-DSS) e **Trivy** (vulnerabilidades de dependências) executados a cada commit no GitHub Actions.
 
+---
+
+## ⚖️ 7. Decisões Arquiteturais: Por Que NÃO se Utiliza AWS Lambda? (ADR 001)
+
+Uma das principais decisões arquiteturais do **NexusPay AI Engine** foi a **não utilização de AWS Lambda (Serverless Functions)**, optando pela adoção de **Contêineres no Amazon EKS (Kubernetes v1.31) com KEDA (Kubernetes Event-driven Autoscaling)**.
+
+### 🔍 Motivos Técnicos e de Negócio:
+
+1. **⚡ Latência Crítica e Cold Starts na JVM / Java 26:**
+   - O `transaction-ledger-service` (Java 26 / Spring Boot 4) é o núcleo financeiro de autorização de transações. O overhead de *cold start* do runtime Java e a inicialização do contexto de injeção de dependência em execuções efêmeras do Lambda degradariam inaceitavelmente o SLA de autorização (< 50ms) exigido pelas maquininhas POS.
+   - No EKS, os pods permanecem aquecidos com **Virtual Threads (Project Loom)** e **Generational ZGC**, garantindo pausas de coleta de lixo inferiores a 1ms.
+
+2. **🌊 Suporte Nativo a Streaming Contínuo (Server-Sent Events / SSE):**
+   - O `edge-gateway` e o `copilot-rag-service` transmitem respostas de IA token a token via SSE.
+   - O modelo síncrono de API Gateway + AWS Lambda impõe limites de tempo de conexão, restrições de buffer intermediário e sobretaxas de faturamento por milissegundo de conexão mantida aberta.
+
+3. **🤖 Orquestração de Agentes Autônomos de Longa Duração (CrewAI & ReAct Loops):**
+   - O `dispute-agent-worker` executa pipelines com 3 agentes autônomos sequenciais/hierárquicos. Dependendo da complexidade do caso e das evidências do lojista, as cadeias de raciocínio e chamadas a ferramentas podem demorar minutos e exigir consumo de memória volátil incompatível com o modelo de funções serverless.
+
+4. **📈 Elasticidade Baseada em Eventos com KEDA (Sem as Limitações do Lambda):**
+   - Com o KEDA (`ScaledObject`), os workers escalam horizontalmente de 1 até 10 réplicas baseados no *lag* dos tópicos Kafka do Amazon MSK e profundidade da fila Amazon SQS.
+   - Atinge-se a **mesma elasticidade e economia do Serverless**, mas com total flexibilidade de CPU/memória, persistência de conexões TCP/pool de banco de dados e sem timeouts arbitrários.
+
+5. **🔄 Paridade Total entre Ambientes (Twelve-Factor App & FinOps):**
+   - A arquitetura em contêineres permite que a stack inteira seja executada de forma idêntica no ambiente local (via `docker-compose` e LocalStack) e em produção na AWS (via Terraform e Kubernetes EKS), assegurando 100% de paridade, facilidade de depuração e custo zero em desenvolvimento.

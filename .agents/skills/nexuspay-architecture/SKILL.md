@@ -19,3 +19,9 @@ description: >-
 ## Padrões de Código
 - Sempre respeite o Clean Architecture e os princípios SOLID.
 - Isole regras de domínio em `domain/`, interfaces em `ports/` e implementações em `services/`.
+
+## Decisões Arquiteturais Relevantes (ADRs)
+- **Zero AWS Lambda / Adoção de Amazon EKS + KEDA:**
+  - O AWS Lambda NÃO é utilizado no projeto para evitar cold starts no core Java 26 (SLA de POS < 50ms), viabilizar streaming de tokens SSE sem restrições de timeout/buffer e permitir execuções de longa duração com múltiplos agentes autônomos no CrewAI.
+  - A elasticidade e economia são garantidas pelo **KEDA** (escala de 1 a 10 pods por profundidade de fila SQS e lag de partições do Kafka MSK) e instâncias **EC2 Spot**.
+
