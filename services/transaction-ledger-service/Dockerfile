@@ -1,24 +1,24 @@
 # Standalone Dockerfile for Transaction Ledger Service (Java 26 / Spring Boot 4)
-FROM eclipse-temurin:21-jdk-alpine AS builder
+FROM eclipse-temurin:26 AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache curl bash unzip
+RUN apt-get update && apt-get install -y --no-install-recommends curl unzip && rm -rf /var/lib/apt/lists/*
 
 COPY pom.xml mvnw ./
 COPY .mvn ./.mvn
 
-RUN chmod +x mvnw && ./mvnw dependency:go-offline -B || true
+RUN chmod +x mvnw && ./mvnw dependency:resolve -B || true
 
 COPY src ./src
 RUN ./mvnw clean package -DskipTests
 
 # Stage de Produção
-FROM eclipse-temurin:21-jre-alpine AS runner
+FROM eclipse-temurin:26-jre AS runner
 
 WORKDIR /app
 
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN useradd -m -u 1001 spring
 USER spring:spring
 
 COPY --from=builder /app/target/*.jar app.jar
