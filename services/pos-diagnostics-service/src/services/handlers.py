@@ -62,7 +62,7 @@ class PosDiagnosticsEngine:
     Engine que orquestra as estratégias de diagnóstico (Dependency Inversion & Open/Closed)
     """
     def __init__(self, strategies: Optional[List[IDiagnosticStrategy]] = None):
-        self.strategies = strategies or [
+        self.strategies = strategies if strategies is not None else [
             CryptoKeyDiagnosticHandler(),
             EmvChipDiagnosticHandler(),
             ConnectivityDiagnosticHandler(),

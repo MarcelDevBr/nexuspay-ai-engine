@@ -8,6 +8,7 @@ const CPF_REGEX = /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/g;
 const CVV_REGEX = /(?:cvv|cvc|código de segurança)[:\s]*([0-9]{3,4})/gi;
 
 export function maskCreditCard(text: string): string {
+  if (typeof text !== 'string') return text;
   return text.replace(CREDIT_CARD_REGEX, (match) => {
     const clean = match.replace(/[\s-]/g, '');
     if (clean.length >= 13 && clean.length <= 19) {
@@ -19,10 +20,12 @@ export function maskCreditCard(text: string): string {
 }
 
 export function maskCPF(text: string): string {
+  if (typeof text !== 'string') return text;
   return text.replace(CPF_REGEX, () => '[CPF_PROTEGIDO]');
 }
 
 export function maskCVV(text: string): string {
+  if (typeof text !== 'string') return text;
   return text.replace(CVV_REGEX, 'cvv: [REDACTED]');
 }
 
