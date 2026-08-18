@@ -41,7 +41,7 @@ echo -e "${GREEN}✔ POS Diagnostics Service OK!${NC}"
 # 5. Dispute Agent Worker
 echo -e "\n${BLUE}▶ 5/6: Testando Dispute Agent Worker (Python/CrewAI)...${NC}"
 cd "$ROOT_DIR/services/dispute-agent-worker"
-uv run --with pytest --with pydantic --with pydantic-settings --with boto3 pytest -q
+uv run --with pytest --with pytest-asyncio --with pytest-cov --with pydantic --with pydantic-settings --with boto3 pytest -q
 echo -e "${GREEN}✔ Dispute Agent Worker OK!${NC}"
 
 # 6. Kubernetes Manifests Validation
