@@ -15,13 +15,14 @@
     <artifactId>transaction-ledger-service</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <name>transaction-ledger-service</name>
-    <description>NexusPay Transaction Ledger Service (Java 26 / Spring Boot 4)</description>
+    <description>NexusPay Transaction Ledger Service (Java 26 / Spring Boot 4 com Lombok)</description>
 
     <properties>
         <java.version>26</java.version>
         <maven.compiler.source>26</maven.compiler.source>
         <maven.compiler.target>26</maven.compiler.target>
         <maven.compiler.release>26</maven.compiler.release>
+        <lombok.version>1.18.36</lombok.version>
         <aws.sdk.version>2.30.0</aws.sdk.version>
     </properties>
 
@@ -117,6 +118,14 @@
             <artifactId>sqs</artifactId>
         </dependency>
 
+        <!-- Project Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Testes -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -149,6 +158,14 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

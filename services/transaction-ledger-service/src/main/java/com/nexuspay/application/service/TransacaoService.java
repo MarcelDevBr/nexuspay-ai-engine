@@ -6,6 +6,8 @@ import com.nexuspay.infrastructure.controllers.dto.TransacaoResponse;
 import com.nexuspay.infrastructure.persistence.LojistaRepository;
 import com.nexuspay.infrastructure.persistence.OutboxEventRepository;
 import com.nexuspay.infrastructure.persistence.TransacaoRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class TransacaoService {
 
-    private static final Logger log = LoggerFactory.getLogger(TransacaoService.class);
+    private static final Logger logFallback = LoggerFactory.getLogger(TransacaoService.class);
 
     private final TransacaoRepository transacaoRepository;
     private final LojistaRepository lojistaRepository;
@@ -31,7 +35,7 @@ public class TransacaoService {
 
     @Transactional
     public TransacaoResponse processarTransacao(TransacaoRequest request) {
-        log.info("Iniciando autorização de transação para lojista: {}", request.getLojistaId());
+        logFallback.info("Iniciando autorização de transação para lojista: {}", request.getLojistaId());
 
         lojistaRepository.findById(request.getLojistaId())
                 .orElseThrow(() -> new IllegalArgumentException("Lojista não encontrado: " + request.getLojistaId()));
@@ -62,7 +66,7 @@ public class TransacaoService {
 
         outboxEventRepository.save(outboxEvent);
 
-        log.info("Transação autorizada com sucesso! ID: {}, Código: {}", transacaoUuid, codigoAutorizacao);
+        logFallback.info("Transação autorizada com sucesso! ID: {}, Código: {}", transacaoUuid, codigoAutorizacao);
 
         return new TransacaoResponse(
                 transacaoUuid,

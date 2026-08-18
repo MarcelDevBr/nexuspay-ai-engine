@@ -4,12 +4,14 @@ import com.nexuspay.application.service.TransacaoService;
 import com.nexuspay.infrastructure.controllers.dto.TransacaoRequest;
 import com.nexuspay.infrastructure.controllers.dto.TransacaoResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/transacoes")
+@RequiredArgsConstructor
 public class TransacaoController {
 
     private final TransacaoService transacaoService;
