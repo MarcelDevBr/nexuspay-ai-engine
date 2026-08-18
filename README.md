@@ -20,6 +20,7 @@
 ## 📌 Sumário
 
 - [1. Visão Geral do Projeto](#1-visão-geral-do-projeto)
+  - [1.1 O que é o NexusPay AI Engine? (Visão para Diferentes Públicos)](#11-o-que-é-o-nexuspay-ai-engine-visão-para-diferentes-públicos)
 - [2. Matriz de Tecnologias & Stack do Monorepo](#2-matriz-de-tecnologias--stack-do-monorepo)
 - [3. Arquitetura de Cloud Computing AWS & FinOps](#3-arquitetura-de-cloud-computing-aws--finops)
 - [4. Diagrama da Arquitetura do Sistema & Event Streaming](#4-diagrama-da-arquitetura-do-sistema--event-streaming)
@@ -46,6 +47,41 @@ O ecossistema foi construído do zero utilizando os princípios de **Clean Archi
 2. **RAG Híbrido com Cache Semântico:** Busca vetorial combinada (pgvector HNSW + Busca Lexical BM25) com cache semântico em memória no Redis que reduz o custo de LLM para R$ 0,00 e latência para 10ms em perguntas frequentes.
 3. **Crew de Multi-Agentes de Chargeback:** 3 agentes autônomos (Extrator de Evidências, Auditor de Compliance de Bandeiras e Redator Jurídico) que geram defesas formais de contestações financeiras automaticamente.
 4. **Resiliência Transacional:** Padrão **Transactional Outbox** em Java 26 que garante consistência eventual atômica entre o banco relacional e mensageria assíncrona (Apache Kafka & Amazon SQS).
+
+---
+
+### 🏛️ 1.1. O que é o NexusPay AI Engine? (Visão para Diferentes Públicos)
+
+#### 🟢 Para um Leigo (Visão Simples e Intuitiva)
+O **NexusPay** é o **"cérebro inteligente"** que opera nos bastidores de empresas de maquininhas de cartão e pagamentos digitais:
+- **Maquininha travada no balcão?** Em vez de ligar para o suporte e esperar na linha, o sistema detecta o erro sozinho pela internet e restaura o funcionamento da maquininha em segundos.
+- **Cliente contestou uma compra (Chargeback)?** Nossos robôs de inteligência artificial reúnem o comprovante, conferem as regras da bandeira do cartão (Visa/Mastercard) e escrevem a defesa jurídica completa para o comerciante não tomar prejuízo.
+- **Privacidade Total:** Nenhum dado sensível de cartão (número completo ou código CVV) fica exposto ou é visto por humanos.
+
+#### ☕ Para o Tech Lead (TL - Arquitetura & Engenharia)
+Plataforma orientada a eventos (**Event-Driven Architecture**) e desacoplada em microsserviços via **Clean Architecture / Ports & Adapters**:
+- **Core Transacional:** Java 26, Spring Boot 4, **Virtual Threads (Loom)** e **Generational ZGC** com **Transactional Outbox Pattern** gravando no PostgreSQL 16 e publicando de forma atômica no **Apache Kafka (MSK)** e **Amazon SQS**.
+- **Motor Cognitivo & RAG:** Python 3.14 com **pgvector HNSW** ($O(\log N)$) + busca BM25 e **Redis Semantic Cache** ($\ge 0.92$ similaridade), reduzindo latência para $\sim 10\text{ms}$ e eliminando custos desnecessários com tokens de LLM.
+- **Orquestração Multi-Agente:** Framework **CrewAI** com 3 agentes autônomos sequenciais e escalonamento elástico no Kubernetes EKS gerenciado pelo **KEDA** (lag de Kafka e profundidade de SQS).
+- **Qualidade & FinOps:** 100% de cobertura com **TDD (paridade 1:1 de arquivos de teste)**, paridade total em desenvolvimento via **LocalStack** e travas no **AWS Budgets ($1.00 USD)**.
+
+#### 📋 Para o Product Owner (PO - Negócio & Eficiência Operacional)
+Solução orientada à eliminação de gargalos operacionais e atrito do cliente:
+- **Zero Fila de Suporte N1:** O Copilot RAG atende dúvidas transacionais, de conciliação e de taxas em tempo real via streaming SSE.
+- **Auto-Recuperação de POS:** Redução drástica do *churn* de lojistas por falhas de hardware ou perda de sincronismo criptográfico (`ERR_58`).
+- **Defesa de Chargebacks Automatizada:** Emissão de defesas fundamentadas dentro dos prazos regulatórios estritos das bandeiras sem demandar horas de analistas manuais.
+- **Conformidade Nativa:** Aderência automática a padrões **PCI-DSS** e normas do **BACEN** (retenção fiscal de 5 anos no S3 Glacier).
+
+#### 📈 Para o Product Manager (PM - Estratégia, Métricas & ROI)
+Plataforma *AI-First* que converte centros de custo (suporte e perdas com fraudes/chargebacks) em alavancas de rentabilidade e retenção:
+
+| Pilar de Negócio | Métrica / KPI (*North Star*) | Impacto Esperado com o NexusPay |
+| :--- | :--- | :--- |
+| **Recuperação de Receita** | *Chargeback Win Rate* | Aumento de **15% a 35%** na taxa de reversão de contestações ganhas pelo lojista. |
+| **Eficiência Operacional** | *MTTR (Mean Time to Resolution)* de POS | Redução de **horas/dias para < 2 segundos** no restabelecimento de terminais. |
+| **Custos de Atendimento** | *Deflection Rate* do Suporte N1 | Automação de até **70%** dos chamados rotineiros via Copilot RAG. |
+| **FinOps & Margem** | Custo por Inferência de IA | **Redução de até 80%** no consumo de APIs de IA graças ao Cache Semântico no Redis. |
+| **Disponibilidade** | *SLA Transacional* | Processamento contínuo em contêineres EKS Spot com tolerância a falhas e sem *cold starts*. |
 
 ---
 

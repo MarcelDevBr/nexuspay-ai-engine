@@ -3,14 +3,13 @@
 **Título:** *Enterprise Polyglot GenAI Platform & Autonomous Multi-Agent Ecosystem for High-Scale Financial Systems*  
 **Autor:** Marcel da Silva Almeida ([github.com/MarcelDevBr](https://github.com/MarcelDevBr))  
 **Repositório Sugerido:** `https://github.com/MarcelDevBr/nexuspay-ai-engine`  
-**Escopo:** Solução corporativa poliglota unindo **Node.js / TypeScript** na borda, **Java 21+ com Spring Boot 4** no core transacional financeiro e **Python 3.13 / FastAPI** no motor de Inteligência Artificial Generativa e Agentes Autônomos.
+**Escopo:** Solução corporativa poliglota unindo **Node.js 26 LTS / TypeScript 5.7** na borda, **Java 26 com Spring Boot 4** no core transacional financeiro e **Python 3.14 / FastAPI** no motor de Inteligência Artificial Generativa e Agentes Autônomos.
 
 ---
 
 ## 🎯 1. O Que É o Projeto e Por Que Ele Existe (A Dor Real do Negócio)
 
-### 💡 O Contexto do Mercado Financeiro e de Adquirência (Stone, Nubank, Itaú, Stripe)
-
+### 💡 O Contexto do Mercado Financeiro e de Adquirência
 No ecossistema de pagamentos e maquininhas de cartão (*adquirência*), existem três desafios monumentais que operam em tensões opostas:
 
 1. **Consistência Transacional Absoluta e Baixa Latência:** Uma transação de cartão ou PIX não pode falhar, duplicar ou perder dinheiro. Exige garantias ACID estritas, concorrência segura e processamento em milissegundos.
@@ -18,8 +17,15 @@ No ecossistema de pagamentos e maquininhas de cartão (*adquirência*), existem 
 3. **Complexidade Operacional e Sobrecarga de Suporte:** Lojistas têm dúvidas sobre extratos, taxas de antecipação, conciliação, contestações de compras (*chargebacks*) e erros técnicos de maquininhas. Isso gera milhões de chamados caros para o atendimento humano e perda de receita em disputas não defendidas a tempo.
 
 ### 🏆 O Papel do `NexusPay AI Engine`
-
 O `NexusPay AI Engine` é uma **plataforma corporativa unificada de IA Generativa e Processamento Transacional**. Ele não é um mero chatbot: é um ecossistema completo que automatiza o atendimento financeiro, audita disputas com agentes autônomos, diagnostica falhas de maquininhas e executa liquidações financeiras com governança bancária rigorosa.
+
+### 👥 Visão por Papéis e Stakeholders
+
+- **🟢 Para um Leigo:** Um "cérebro inteligente" que resolve falhas nas maquininhas de cartão em segundos sem filas de suporte, defende contestações de compras (chargebacks) automaticamente com robôs de IA e mantém 100% dos dados bancários do cliente anônimos e protegidos.
+- **☕ Para o Tech Lead (TL):** Arquitetura orientada a eventos (*Event-Driven*) com *Transactional Outbox* em Java 26 (Loom/ZGC), streaming perimetral em Node.js 26 (Fastify/SSE), Hybrid RAG com pgvector HNSW e Cache Semântico em Redis 7, orquestração de 3 agentes CrewAI assíncronos e 100% de cobertura TDD 1:1.
+- **📋 Para o Product Owner (PO):** Eliminação de até 70% das dúvidas de suporte N1 com respostas em < 10ms, redução de churn de lojistas por falha de POS via auto-recuperação (`ERR_58`) e garantia de conformidade com prazos e regras das bandeiras (Visa/Mastercard/Elo).
+- **📈 Para o Product Manager (PM):** Posicionamento *AI-First* focado em aumentar a *Chargeback Win Rate* em até 35%, derrubar o *MTTR* de POS para < 2s e reduzir custos operacionais de IA em até 80% através de FinOps e Cache Semântico.
+
 
 ---
 

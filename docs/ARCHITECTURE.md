@@ -176,3 +176,39 @@ Uma das principais decisões arquiteturais do **NexusPay AI Engine** foi a **nã
 
 5. **🔄 Paridade Total entre Ambientes (Twelve-Factor App & FinOps):**
    - A arquitetura em contêineres permite que a stack inteira seja executada de forma idêntica no ambiente local (via `docker-compose` e LocalStack) e em produção na AWS (via Terraform e Kubernetes EKS), assegurando 100% de paridade, facilidade de depuração e custo zero em desenvolvimento.
+
+---
+
+## 👥 8. Visão Executiva e Perfis de Stakeholders
+
+### 🟢 8.1. Para um Leigo (Visão Simples e Intuitiva)
+O **NexusPay AI Engine** funciona como o cérebro inteligente invisível por trás das transações comerciais:
+- **Maquininha travada no balcão?** O sistema detecta a falha criptográfica ou de leitura e a recupera remotamente em milissegundos sem filas de suporte.
+- **Contestação de compra (Chargeback)?** Robôs especialistas em regras financeiras analisam os logs da transação e produzem a defesa jurídica completa para evitar prejuízos indevidos ao lojista.
+- **Proteção dos Dados:** Ninguém (humano ou modelo de IA) tem acesso a dados sensíveis de pagamento; números de cartão e códigos de segurança são anonimizados antes do tráfego interno.
+
+### ☕ 8.2. Para o Tech Lead (TL - Arquitetura & Engenharia de Software)
+- **Topologia:** Microsserviços poliglotas seguindo *Ports and Adapters (Hexagonal)*.
+- **Core Ledger:** Java 26 com Project Loom (*Virtual Threads*) e Generational ZGC.
+- **Garantia Transacional:** *Transactional Outbox Pattern* no PostgreSQL 16 com publicação dual no Apache Kafka (Amazon MSK) e Amazon SQS.
+- **Camada Cognitiva:** Hybrid RAG com pgvector (índices HNSW $O(\log N)$) + BM25 léxico e Semantic Caching no Redis 7 ($\ge 0.92$ similaridade cosseno).
+- **Orquestração Multi-Agente:** CrewAI assíncrono com autoscaling horizontal via KEDA.
+- **DevSecOps & FinOps:** 100% TDD com paridade 1:1 de arquivos de teste, LocalStack para paridade local sem custos de cloud e AWS Budgets fixado em $1.00 USD.
+
+### 📋 8.3. Para o Product Owner (PO - Negócio & Eficiência Operacional)
+- **Desafogo de Suporte N1:** Copilot em streaming (SSE) tira dúvidas sobre extratos, conciliação e taxas em < 10ms para consultas frequentes.
+- **Mitigação de Churn por Falha de POS:** Diagnóstico determinístico e auto-recuperação de falhas de chaves criptográficas (`ERR_58`) e chip EMV.
+- **Automação de Chargeback:** Dossiês defensivos gerados em conformidade com as regras e prazos das bandeiras (Visa, Mastercard, Elo).
+- **Conformidade Regulatória:** Proteção PCI-DSS perimetral e retenção fiscal de 5 anos via Amazon S3 Glacier (normas BACEN).
+
+### 📈 8.4. Para o Product Manager (PM - Estratégia, Métricas & ROI)
+Posicionamento *AI-First* convertendo centros de custo operacional em alavancas de retenção e rentabilidade:
+
+| Pilar de Negócio | Métrica / KPI (*North Star*) | Impacto com o NexusPay AI Engine |
+| :--- | :--- | :--- |
+| **Recuperação de Receita** | *Chargeback Win Rate* | Aumento de **15% a 35%** na reversão de contestações a favor do lojista. |
+| **Eficiência Operacional** | *MTTR* de POS | Queda de **horas/dias para < 2 segundos** na recuperação de falhas operacionais. |
+| **Custos de Atendimento** | *Deflection Rate* N1 | Automação de até **70%** dos chamados rotineiros via Copilot RAG. |
+| **FinOps & Margem** | Custo por Inferência | **Redução de até 80%** no consumo de APIs LLM via Cache Semântico Redis. |
+| **Disponibilidade** | *SLA Transacional* | Processamento contínuo em contêineres EKS Spot com tolerância a falhas e sem cold starts. |
+
