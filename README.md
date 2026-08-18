@@ -63,53 +63,61 @@ A escolha de três linguagens reflete a alocação de cada tecnologia no seu pon
 
 ---
 
-## 🏛️ Arquitetura do Ecossistema
+## 🏛️ Arquitetura dos 5 Microsserviços Especializados
 
 ```mermaid
 graph TD
-    Client[📱 Lojista / POS / Portal Web] -->|HTTPS / SSE| EdgeGateway[🌐 1. Edge API Gateway - Node.js Fastify]
+    Client[📱 POS / Lojista / App Web] -->|HTTPS / SSE| EdgeGateway[🌐 1. edge-gateway]
     
-    subgraph "Edge Security & FinOps"
-        EdgeGateway -->|1. Sanitização PII| PIISanitizer[🛡️ PII Masking & PCI-DSS Guardrails]
-        PIISanitizer -->|2. Check Similaridade Vetorial| SemanticCache[(⚡ Redis 7 Semantic Cache)]
-        SemanticCache -.->|Cache HIT: 10ms / R$ 0,00| EdgeGateway
-    end
-    
-    subgraph "Core Business & AI Processing"
-        PIISanitizer -->|3a. Operações Transacionais / PIX| JavaCore[☕ 2. Transactional Core - Java 21 Spring Boot 4]
-        PIISanitizer -->|3b. Consultas de IA / RAG em Streaming| PyCore[🐍 3. GenAI Engine - Python 3.13 FastAPI]
+    subgraph "Camada de Microsserviços de Domínio"
+        EdgeGateway -->|Transações ACID & Ledger| TransactionalCore[☕ 2. transaction-ledger-service]
+        EdgeGateway -->|RAG Financeiro & Streaming| CopilotService[💬 3. copilot-rag-service]
+        EdgeGateway -->|Diagnóstico & Telemetria POS| PosDiagnostics[📟 4. pos-diagnostics-service]
         
-        JavaCore -->|4. Transactional Outbox| SQSBroker[📬 Amazon SQS FIFO / Standard]
-        SQSBroker -->|5. Consumo Assíncrono| PyWorkers[🤖 Worker Multi-Agente CrewAI]
+        TransactionalCore -->|Transactional Outbox| SQS[📬 Amazon SQS Events]
+        SQS -->|Event-Driven Async| DisputeWorker[🤖 5. dispute-agent-worker]
     end
     
-    subgraph "Módulos Especializados"
-        PyCore --> Mod1[📊 Módulo 1: Copilot Financeiro RAG Híbrido]
-        PyCore --> Mod3[📟 Módulo 3: Diagnóstico POS & Tool Calling]
-        PyCore --> Mod4[🧠 Módulo 4: Smart Model Router]
-        PyWorkers --> Mod2[⚖️ Módulo 2: Multi-Agente de Chargebacks]
-        JavaCore --> Mod5[⚡ Módulo 5: Ledger Transacional & PIX]
-    end
-    
-    subgraph "Single Source of Truth"
-        JavaCore & PyCore & PyWorkers --> DB[(🐘 Amazon Aurora PostgreSQL 16 + pgvector HNSW)]
-    end
-    
-    subgraph "Cloud & LLMOps"
-        PyCore & PyWorkers --> Bedrock[🤖 AWS Bedrock Claude 3.5 Sonnet / Llama 3]
-        EdgeGateway & JavaCore & PyCore & PyWorkers --> Telemetry[📈 OpenTelemetry / CloudWatch]
+    subgraph "Camada de Dados & Cache Unificada"
+        CopilotService --> Redis[(⚡ Redis 7 Semantic Cache)]
+        TransactionalCore & CopilotService & DisputeWorker --> DB[(🐘 Amazon Aurora PostgreSQL 16 + pgvector HNSW)]
     end
 ```
 
+| Microsserviço | Stack | Responsabilidade / Domínio |
+| :--- | :--- | :--- |
+| **🌐 `edge-gateway`** | Node.js 26, Fastify 5, TypeScript | Borda, Rate Limiting, Sanitização PII (PCI-DSS) e Streaming SSE. |
+| **☕ `transaction-ledger-service`** | Java 26, Spring Boot 4, Hibernate | Ledger imutável, autorização, liquidação PIX e Transactional Outbox SQS. |
+| **💬 `copilot-rag-service`** | Python 3.14, FastAPI, pgvector, Redis | RAG Híbrido, Smart Model Router e Semantic Cache (<10ms / R$ 0,00). |
+| **📟 `pos-diagnostics-service`** | Python 3.14, FastAPI | Telemetria de maquininhas, Function Calling e renovação de chaves EMV. |
+| **🤖 `dispute-agent-worker`** | Python 3.14, CrewAI, Boto3 | Multi-Agentes autônomos para auditoria e defesa de chargebacks via SQS. |
+
 ---
 
-## 🛠️ Os 5 Módulos Especializados
+## 📂 Estrutura do Monorepo
 
-1. **📊 Copilot Financeiro com RAG Híbrido:** Responde dúvidas de extrato, taxas e conciliação em streaming SSE. Combina busca densa (HNSW) com busca esparsa (BM25) e *Cross-Encoder Reranking*.
-2. **⚖️ Multi-Agente Autônomo de Chargebacks (CrewAI):** Orquestração de 3 agentes que extraem evidências, validam regras das bandeiras (Visa/Mastercard) e normativas BACEN e geram peças de defesa automaticamente.
-3. **📟 Diagnóstico Inteligente de Maquininhas POS:** Identifica falhas de conectividade e hardware via *Function Calling* determinístico (`reset_pos_security_keys`, telemetria de sinal e decodificação ISO 8583).
-4. **🧠 Smart Model Routing (FinOps):** Classificador de intenção que direciona perguntas triviais a modelos leves (Llama 3 8B) e reserva modelos de alto raciocínio (Claude 3.5 Sonnet) para cálculos contábeis complexos.
-5. **⚡ Core Transacional & Ledger Imutável:** Processamento financeiro em dupla entrada com consistência ACID rigorosa, bloqueio pessimista anti-fraude e emissão garantida de eventos.
+```text
+nexuspay-ai-engine/
+├── .github/workflows/
+│   ├── ci.yml                          # Matriz CI dos 5 microsserviços + Docker Buildx
+│   └── terraform-validate.yml          # Validação de IaC e FinOps Guardrails
+├── docker/
+│   ├── docker-compose.yml              # Sobe os 5 microsserviços + PostgreSQL (pgvector) + Redis + LocalStack
+│   └── init-db/
+│       ├── 01-schema.sql               # DDL pgvector HNSW + Partições + Outbox
+│       └── 02-seed.sql                 # Dados iniciais
+├── terraform/
+│   ├── main.tf                         # Configuração AWS & LocalStack
+│   ├── budgets.tf                      # FinOps Guardrail ($1.00 Budget Limit)
+│   └── sqs.tf                          # Filas SQS & DLQ
+│
+└── services/
+    ├── edge-gateway/                   # [Node.js 26 / Fastify 5]
+    ├── transaction-ledger-service/     # [Java 26 / Spring Boot 4]
+    ├── copilot-rag-service/            # [Python 3.14 / FastAPI / pgvector]
+    ├── pos-diagnostics-service/        # [Python 3.14 / FastAPI / IoT]
+    └── dispute-agent-worker/           # [Python 3.14 / CrewAI / SQS Worker]
+```
 
 ---
 

@@ -1,4 +1,4 @@
-name: 🚀 NexusPay CI/CD Pipeline
+name: 🚀 NexusPay Microservices CI/CD Pipeline
 
 on:
   push:
@@ -8,111 +8,147 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # 1. Testes do Edge Gateway (Node.js 26 LTS)
+  # 1. Edge Gateway (Node.js 26)
   # ---------------------------------------------------------------------------
-  test-gateway:
-    name: 🌐 Test Gateway (Node.js 26)
+  test-edge-gateway:
+    name: 🌐 Edge Gateway (Node.js 26)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 26
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 26
           cache: 'yarn'
-          cache-dependency-path: gateway/yarn.lock
-
-      - name: Install Dependencies
-        working-directory: ./gateway
-        run: yarn install --frozen-lockfile || yarn install
-
-      - name: Run Tests
-        working-directory: ./gateway
-        run: yarn test
-
-      - name: Build TypeScript
-        working-directory: ./gateway
-        run: yarn build
+          cache-dependency-path: services/edge-gateway/yarn.lock
+      - name: Install & Test
+        working-directory: ./services/edge-gateway
+        run: |
+          yarn install --frozen-lockfile || yarn install
+          yarn test
+          yarn build
 
   # ---------------------------------------------------------------------------
-  # 2. Testes do Transactional Core (Java 26 / Spring Boot 4)
+  # 2. Transaction Ledger Service (Java 26 / Spring Boot 4)
   # ---------------------------------------------------------------------------
-  test-java-core:
-    name: ☕ Test Transactional Core (Java 26)
+  test-transaction-ledger-service:
+    name: ☕ Transaction Ledger (Java 26)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java 26 (Eclipse Temurin)
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '26'
           cache: 'maven'
-
-      - name: Run Unit Tests
-        working-directory: ./transactional_core
+      - name: Test Spring Boot
+        working-directory: ./services/transaction-ledger-service
         run: mvn test
 
   # ---------------------------------------------------------------------------
-  # 3. Testes do GenAI Engine (Python 3.14 / FastAPI / CrewAI)
+  # 3. Copilot RAG Service (Python 3.14)
   # ---------------------------------------------------------------------------
-  test-ai-core:
-    name: 🐍 Test AI Core (Python 3.14)
+  test-copilot-rag-service:
+    name: 💬 Copilot RAG Service (Python 3.14)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
         with:
           version: "latest"
-
-      - name: Setup Python 3.14
-        run: uv python install 3.14
-
-      - name: Run Pytest
-        working-directory: ./ai_core
+      - run: uv python install 3.14
+      - name: Test Copilot
+        working-directory: ./services/copilot-rag-service
         run: |
           uv venv
           uv pip install -e ".[dev]"
-          uv run pytest --cov=src
+          uv run pytest
 
   # ---------------------------------------------------------------------------
-  # 4. Validação de Build dos Contêineres Docker
+  # 4. POS Diagnostics Service (Python 3.14)
   # ---------------------------------------------------------------------------
-  docker-build-verification:
-    name: 🐳 Docker Build Verification
-    needs: [test-gateway, test-java-core, test-ai-core]
+  test-pos-diagnostics-service:
+    name: 📟 POS Diagnostics Service (Python 3.14)
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - run: uv python install 3.14
+      - name: Test POS Diagnostics
+        working-directory: ./services/pos-diagnostics-service
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          uv run pytest
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+  # ---------------------------------------------------------------------------
+  # 5. Dispute Agent Worker (Python 3.14)
+  # ---------------------------------------------------------------------------
+  test-dispute-agent-worker:
+    name: 🤖 Dispute Agent Worker (Python 3.14)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+      - run: uv python install 3.14
+      - name: Test Dispute Crew Worker
+        working-directory: ./services/dispute-agent-worker
+        run: |
+          uv venv
+          uv pip install -e ".[dev]"
+          uv run pytest
 
-      - name: Build Gateway Image
+  # ---------------------------------------------------------------------------
+  # 6. Docker Build Verification dos 5 Microsserviços
+  # ---------------------------------------------------------------------------
+  docker-build-verification:
+    name: 🐳 Docker Build Verification (5 Microservices)
+    needs: [
+      test-edge-gateway,
+      test-transaction-ledger-service,
+      test-copilot-rag-service,
+      test-pos-diagnostics-service,
+      test-dispute-agent-worker
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build Edge Gateway
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./docker/Dockerfile.edge-gateway
+          context: ./services/edge-gateway
+          file: ./services/edge-gateway/Dockerfile
           push: false
 
-      - name: Build Transactional Core Image
+      - name: Build Transaction Ledger Service
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./docker/Dockerfile.transactional-core
+          context: ./services/transaction-ledger-service
+          file: ./services/transaction-ledger-service/Dockerfile
           push: false
 
-      - name: Build GenAI Engine Image
+      - name: Build Copilot RAG Service
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./docker/Dockerfile.genai-engine
+          context: ./services/copilot-rag-service
+          file: ./services/copilot-rag-service/Dockerfile
+          push: false
+
+      - name: Build POS Diagnostics Service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/pos-diagnostics-service
+          file: ./services/pos-diagnostics-service/Dockerfile
+          push: false
+
+      - name: Build Dispute Agent Worker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/dispute-agent-worker
+          file: ./services/dispute-agent-worker/Dockerfile
           push: false
