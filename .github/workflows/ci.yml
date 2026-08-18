@@ -21,7 +21,7 @@ jobs:
       - name: Install & Test
         working-directory: ./services/edge-gateway
         run: |
-          yarn install --production=false
+          yarn install --force
           yarn test
           yarn build
 
